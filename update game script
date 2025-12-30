@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>유기사 RPG – 끝없는 여정</title>
+
+<style>
+body {
+    margin: 0;
+    height: 100vh;
+    background: radial-gradient(circle at top, #2b2d31, #000);
+    color: #dbdee1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.container {
+    width: 92%;
+    max-width: 460px;
+    background: linear-gradient(180deg, #1e1f22, #141517);
+    border-radius: 28px;
+    padding: 18px;
+    box-shadow: 0 0 50px rgba(0,0,0,0.9);
+}
+
+/* HUD */
+.hud {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.hud-box {
+    flex: 1;
+    margin: 0 4px;
+    background: #111;
+    border-radius: 14px;
+    padding: 8px 0;
+    text-align: center;
+    font-size: 12px;
+    font-weight: bold;
+}
+.hud-box span {
+    display: block;
+    font-size: 17px;
+}
+
+/* 무지개 (각성) */
+.rainbow {
+    background: linear-gradient(
+        270deg,
+        red, orange, yellow, green, cyan, blue, purple, red
+    );
+    background-size: 600% 600%;
+    animation: rainbow 2s linear infinite;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+@keyframes rainbow {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+/* 지역 */
+.area {
+    text-align: center;
+    font-size: 14px;
+    margin-bottom: 6px;
+    color: #9fa1ff;
+}
+
+/* 몬스터 */
+.monster-box {
+    background: radial-gradient(circle at top, #1b1c1f, #0c0d0f);
+    border-radius: 26px;
+    padding: 26px 16px;
+    text-align: center;
+    margin-bottom: 10px;
+    cursor: pointer;
+    user-select: none;
+}
+.monster-name {
+    font-size: 22px;
+    margin-bottom: 8px;
+}
+.hp-bar {
+    width: 100%;
+    height: 14px;
+    background: #111;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.hp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ff3b3b, #ff7b7b);
+    width: 100%;
+    transition: width 0.1s;
+}
+
+/* 버튼 */
+.btn {
+    width: 100%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 18px;
+    border: none;
+    cursor: pointer;
+    color: white;
+    background: linear-gradient(to bottom, #5865F2, #404EED);
+    margin-top: 8px;
+}
+.btn.awakened {
+    background: linear-gradient(
+        270deg,
+        red, orange, yellow, green, cyan, blue, purple
+    );
+    background-size: 600% 600%;
+    animation: rainbow 2s linear infinite;
+}
+
+.log {
+    margin-top: 6px;
+    font-size: 13px;
+    color: #aaa;
+    text-align: center;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+    <div class="hud">
+        <div class="hud-box">강화<span id="upgradeLv">1</span></div>
+        <div class="hud-box">ATK<span id="atk">1</span></div>
+        <div class="hud-box">💰<span id="coin">0</span></div>
+    </div>
+
+    <div id="areaText" class="area">🌱 초원</div>
+
+    <div class="monster-box" onclick="manualAttack()">
+        <div id="monsterName" class="monster-name">슬라임</div>
+        <div class="hp-bar">
+            <div id="hpFill" class="hp-fill"></div>
+        </div>
+    </div>
+
+    <button id="upgradeBtn" class="btn" onclick="upgrade()">🔧 강화 (<span id="chanceText">90</span>%)</button>
+    <button class="btn" onclick="toggleIdle()">⏳ 방치: <span id="idleState">OFF</span></button>
+
+    <div id="log" class="log">여정이 시작되었다…</div>
+
+</div>
+
+<!-- 🔊 사운드 -->
+<audio id="hitSound" src="https://assets.mixkit.co/sfx/preview/mixkit-quick-hit-2187.mp3"></audio>
+<audio id="upgradeSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
+
+<script>
+/* =====================
+   기본 스탯
+===================== */
+let coins = 0;
+let atk = 1;
+let upgradeLv = 1;
+let upgradeChance = 90;
+let kills = 0;
+
+/* 보너스 골드 */
+const bonusGoldChance = 20; // %
+const bonusGoldAmount = 30;
+
+/* 방치 */
+let idle = false;
+let idleTimer = null;
+
+/* 몬스터 */
+let monsterHp = 10;
+let monsterMaxHp = 10;
+
+/* 지역 */
+const areas = ["🌱 초원","🌴 밀림","❄ 눈","🌋 화산","🌌 공허"];
+const monsters = [
+    ["슬라임","초원 늑대","버섯괴물"],
+    ["고블린","독거미","정글 오크"],
+    ["빙결수","설인","얼음 골렘"],
+    ["화염령","용암 비스트","불꽃 기사"],
+    ["이름 없는 존재","공허의 눈","차원의 망령"]
+];
+const areaLevelReq = [1,10,20,30,40];
+
+/* =====================
+   지역 계산
+===================== */
+function areaIndex() {
+    let idx = Math.floor(kills / 6);
+    for (let i = 0; i < areas.length; i++) {
+        if (i > idx || playerLevel() < areaLevelReq[i]) return Math.max(0, i - 1);
+    }
+    return areas.length - 1;
+}
+
+function playerLevel() {
+    return Math.floor(upgradeLv / 2) + 1;
+}
+
+/* =====================
+   몬스터 생성
+===================== */
+function spawnMonster() {
+    const area = areaIndex();
+    monsterMaxHp = 10 + kills * 3 + area * 20;
+    monsterHp = monsterMaxHp;
+
+    const list = monsters[area];
+    document.getElementById("monsterName").textContent =
+        list[Math.floor(Math.random() * list.length)];
+
+    document.getElementById("areaText").textContent =
+        `${areas[area]} (권장 LV ${areaLevelReq[area]})`;
+
+    updateMonsterUI();
+}
+
+/* =====================
+   공격
+===================== */
+function attack(dmg) {
+    monsterHp -= dmg;
+    document.getElementById("hitSound").play();
+
+    if (monsterHp <= 0) {
+        kills++;
+
+        let baseGold = 5 + areaIndex() * 5;
+        coins += baseGold;
+
+        if (Math.random() * 100 < bonusGoldChance) {
+            coins += bonusGoldAmount;
+            document.getElementById("log").textContent =
+                `💰 보너스 골드 +${bonusGoldAmount}!`;
+        } else {
+            document.getElementById("log").textContent =
+                `몬스터 처치! +${baseGold}💰`;
+        }
+
+        spawnMonster();
+    }
+    updateUI();
+}
+function manualAttack() { attack(atk); }
+
+/* =====================
+   강화
+===================== */
+function upgrade() {
+    const awakened = upgradeLv >= 10;
+    const realChance = awakened ? Math.min(95, upgradeChance + 10) : upgradeChance;
+
+    if (Math.random() * 100 <= realChance) {
+        upgradeLv++;
+        atk += awakened ? 2 : 1;
+        upgradeChance = Math.max(10, upgradeChance - (awakened ? 1 : 2));
+        document.getElementById("upgradeSound").play();
+        document.getElementById("log").textContent =
+            awakened ? "🔥 각성 성공!" : "강화 성공!";
+    } else {
+        document.getElementById("log").textContent = "강화 실패…";
+    }
+    updateUI();
+}
+
+/* =====================
+   방치
+===================== */
+function toggleIdle() {
+    idle = !idle;
+    document.getElementById("idleState").textContent = idle ? "ON" : "OFF";
+    idle ? idleTimer = setInterval(() => attack(atk), 1000)
+         : clearInterval(idleTimer);
+}
+
+/* =====================
+   UI
+===================== */
+function updateMonsterUI() {
+    document.getElementById("hpFill").style.width =
+        (monsterHp / monsterMaxHp * 100) + "%";
+}
+
+function updateUI() {
+    document.getElementById("coin").textContent = coins;
+    document.getElementById("atk").textContent = atk;
+
+    const lv = document.getElementById("upgradeLv");
+    lv.textContent = upgradeLv;
+    if (upgradeLv >= 10) lv.classList.add("rainbow");
+
+    document.getElementById("chanceText").textContent = upgradeChance;
+
+    const btn = document.getElementById("upgradeBtn");
+    if (upgradeLv >= 10) btn.classList.add("awakened");
+
+    updateMonsterUI();
+}
+
+/* 시작 */
+spawnMonster();
+updateUI();
+</script>
+</body>
+</html>
