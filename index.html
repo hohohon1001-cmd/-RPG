@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>유기사 RPG – 자동사냥 + 전직 + 소리</title>
+<title>유기사 RPG – 완전판</title>
 <style>
 body{margin:0;height:100vh;background:radial-gradient(circle at top,#2a2d44,#000);
 font-family:'Segoe UI',sans-serif;color:#e6e8ff;display:flex;justify-content:center;align-items:center;}
@@ -29,17 +29,17 @@ border-radius:30px;padding:18px;box-shadow:0 0 60px rgba(0,0,0,.95);}
 
 <div class="hud">
  <div class="hud-box">LV<span id="playerLv">1</span></div>
- <div class="hud-box">직업<span id="jobText">우유참치</span></div>
+ <div class="hud-box">직업<span id="jobText">초보자</span></div>
  <div class="hud-box">ATK<span id="atk">1</span></div>
  <div class="hud-box">강화<span id="upgradeLv">1</span></div>
  <div class="hud-box">💰<span id="coin">0</span></div>
  <div class="hud-box">EXP<span id="expText">0/10</span></div>
 </div>
 
-<div id="areaText" class="area">🌱 잼못타</div>
+<div id="areaText" class="area">🌱 초원</div>
 
 <div class="monster" onclick="attack()">
- <div id="monsterName" class="monster-name">아직도 못깬 멜로우</div>
+ <div id="monsterName" class="monster-name">슬라임</div>
  <div class="hp-bar"><div id="hpFill" class="hp-fill"></div></div>
 </div>
 
@@ -47,9 +47,9 @@ border-radius:30px;padding:18px;box-shadow:0 0 60px rgba(0,0,0,.95);}
 <button id="jobBtn" class="btn job" onclick="jobChange()" style="display:none;">🔮 전직</button>
 <button id="autoBtn" class="btn auto" onclick="toggleAuto()">🤖 자동사냥 OFF</button>
 
-<div id="log" class="log">점프맵이 시작되었다…</div>
+<div id="log" class="log">게임 시작! 화면 클릭 후 사운드 활성화</div>
 
-<!-- 🔊 사운드 -->
+<!-- 사운드 -->
 <audio id="hitSound" src="https://assets.mixkit.co/sfx/preview/mixkit-quick-hit-2187.mp3"></audio>
 <audio id="killSound" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3"></audio>
 <audio id="upgradeSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
@@ -58,27 +58,29 @@ border-radius:30px;padding:18px;box-shadow:0 0 60px rgba(0,0,0,.95);}
 <audio id="bossSound" src="https://assets.mixkit.co/sfx/preview/mixkit-dramatic-hit-166.mp3"></audio>
 
 <script>
+/* ===== 변수 ===== */
 let coins=0, atk=1, playerLv=1, exp=0, nextExp=10;
 let upgradeLv=1, upgradeChance=90;
 let job="초보자", jobStage=0, goldBonus=1;
 let monsterHp=10, monsterMaxHp=10, kills=0;
 let autoHunt=false, autoInterval=null;
+let soundEnabled=false;
 
 /* ===== 지역/몬스터 ===== */
 const areas=[
- {name:"🌱 잼못타",lv:1},{name:"🌴 급못타",lv:10},{name:"❄ 유기사의 차가운 농담",lv:20},
- {name:"🏜 식탁",lv:30},{name:"🌋 팀 나빠",lv:40},{name:"🌌 유기사 디스코드",lv:50}
+ {name:"🌱 초원",lv:1},{name:"🌴 밀림",lv:10},{name:"❄ 설산",lv:20},
+ {name:"🏜 사막",lv:30},{name:"🌋 화산",lv:40},{name:"🌌 공허",lv:50}
 ];
 const monsters=[
- ["아직도 못깬 멜님","같이 올라가는 벨키님"],
- ["이걸 또 어려워 하시는 멜님","먼저 올라간 우유참치님"],
- ["왕이 넘어지면? 킹콩ㅋㅋㅋ","아니 실수로 라이벌들어감"],
- ["내 옷에 떨어진 밥풀님","후식으론 준브레드엉덩이"],
- ["팀나빠","풍성한 할로윈"],
- ["흑화한 멜님","자칼님","보스: 유기사"]
+ ["슬라임","돌슬라임"],
+ ["고블린","독고블린"],
+ ["빙결수","눈늑대"],
+ ["모래정령","사막전사"],
+ ["화염령","용암괴물"],
+ ["공허수","차원포식자","보스: 공허의 군주"]
 ];
 
-/* ===== UI 요소 ===== */
+/* ===== UI ===== */
 const playerLvSpan = document.getElementById("playerLv");
 const atkSpan = document.getElementById("atk");
 const upgradeLvSpan = document.getElementById("upgradeLv");
@@ -101,28 +103,25 @@ const failSound = document.getElementById("failSound");
 const levelSound = document.getElementById("levelSound");
 const bossSound = document.getElementById("bossSound");
 
-/* ===== 브라우저 정책 대비 초기 사운드 활성화 ===== */
+/* ===== 브라우저 정책 대비 사운드 초기화 ===== */
 document.body.addEventListener("click", ()=>{
   [hitSound, killSound, upgradeSound, failSound, levelSound, bossSound].forEach(s=>{
     s.play().catch(()=>{});
     s.pause();
     s.currentTime=0;
   });
+  soundEnabled=true;
+  logElem.textContent = "🔊 사운드 활성화 완료!";
 },{once:true});
 
 /* ===== 저장/불러오기 ===== */
 function save(){
- localStorage.setItem("yugisaRPG2",JSON.stringify({
-  coins, atk, playerLv, exp, nextExp,
-  upgradeLv, upgradeChance, job, jobStage, goldBonus, kills
- }));
+ localStorage.setItem("yugisaRPG2",JSON.stringify({coins,atk,playerLv,exp,nextExp,upgradeLv,upgradeChance,job,jobStage,goldBonus,kills}));
 }
 function load(){
  const s=JSON.parse(localStorage.getItem("yugisaRPG2"));
  if(!s) return;
- coins = s.coins; atk = s.atk; playerLv = s.playerLv; exp = s.exp; nextExp = s.nextExp;
- upgradeLv = s.upgradeLv; upgradeChance = s.upgradeChance;
- job = s.job; jobStage = s.jobStage; goldBonus = s.goldBonus; kills = s.kills;
+ Object.assign(window,s);
 }
 
 /* ===== UI 갱신 ===== */
@@ -140,17 +139,6 @@ function updateUI(){
  checkJob();
 }
 
-/* ===== 몬스터 생성 ===== */
-function spawnMonster(){
- const a = areaIndex();
- monsterMaxHp = 30 + a*40 + kills*2;
- monsterHp = monsterMaxHp;
- monsterNameElem.textContent = monsters[a][Math.floor(Math.random()*monsters[a].length)];
- areaTextElem.textContent = areas[a].name;
- if(a===5 && monsterNameElem.textContent.includes("보스")) {bossSound.currentTime=0; bossSound.play().catch(()=>{});}
- updateUI();
-}
-
 /* ===== 지역 인덱스 ===== */
 function areaIndex(){
  let i=0;
@@ -158,21 +146,31 @@ function areaIndex(){
  return i;
 }
 
+/* ===== 몬스터 생성 ===== */
+function spawnMonster(){
+ const a=areaIndex();
+ monsterMaxHp = 30 + a*40 + kills*2;
+ monsterHp = monsterMaxHp;
+ monsterNameElem.textContent = monsters[a][Math.floor(Math.random()*monsters[a].length)];
+ areaTextElem.textContent = areas[a].name;
+ if(a===5 && monsterNameElem.textContent.includes("보스") && soundEnabled){
+   bossSound.currentTime=0; bossSound.play().catch(()=>{});
+ }
+ updateUI();
+}
+
 /* ===== 전투 ===== */
 function attack(){
  monsterHp -= atk;
- hitSound.currentTime=0; hitSound.play().catch(()=>{});
+ if(soundEnabled){ hitSound.currentTime=0; hitSound.play().catch(()=>{});}
  if(monsterHp<=0){
-  killSound.currentTime=0; killSound.play().catch(()=>{});
-  kills++;
-  let drop = Math.random();
-  if(drop<0.05){coins+=100; logElem.textContent="🌈 무지개 골드 획득!!!";}
-  else{coins += Math.floor((10+areaIndex()*6)*goldBonus);}
-  
-  exp += Math.floor((8 + areaIndex()*6) * (1 + upgradeLv*0.1 + goldBonus));
-
-  levelUp();
-  spawnMonster();
+   if(soundEnabled){ killSound.currentTime=0; killSound.play().catch(()=>{});}
+   kills++;
+   coins += Math.random()<0.05?100:Math.floor((10+areaIndex()*6)*goldBonus);
+   if(Math.random()<0.05) logElem.textContent="🌈 무지개 골드!";
+   exp += Math.floor((8+areaIndex()*6)*(1+upgradeLv*0.1+goldBonus));
+   levelUp();
+   spawnMonster();
  }
  updateUI();
 }
@@ -184,7 +182,7 @@ function levelUp(){
    playerLv++;
    nextExp = Math.floor(nextExp*1.5);
    atk++;
-   levelSound.currentTime=0; levelSound.play().catch(()=>{});
+   if(soundEnabled){ levelSound.currentTime=0; levelSound.play().catch(()=>{});}
    logElem.textContent = `🎉 레벨업! LV ${playerLv}`;
  }
 }
@@ -192,17 +190,17 @@ function levelUp(){
 /* ===== 강화 ===== */
 function upgrade(){
  const cost = 20 + upgradeLv*6;
- if(coins<cost){ logElem.textContent="💸 골드 부족!"; failSound.currentTime=0; failSound.play().catch(()=>{}); return;}
+ if(coins<cost){ logElem.textContent="💸 골드 부족!"; if(soundEnabled){failSound.currentTime=0; failSound.play().catch(()=>{});} return;}
  coins -= cost;
  let chance = upgradeLv>=10?95:upgradeChance;
  if(Math.random()*100<=chance){
    upgradeLv++;
    atk += upgradeLv>=10?2:1;
    upgradeChance = Math.max(10, upgradeChance-2);
-   upgradeSound.currentTime=0; upgradeSound.play().catch(()=>{});
+   if(soundEnabled){ upgradeSound.currentTime=0; upgradeSound.play().catch(()=>{});}
    logElem.textContent = "✨ 강화 성공!";
  }else{
-   failSound.currentTime=0; failSound.play().catch(()=>{});
+   if(soundEnabled){ failSound.currentTime=0; failSound.play().catch(()=>{});}
    logElem.textContent="💥 강화 실패…";
  }
  updateUI();
