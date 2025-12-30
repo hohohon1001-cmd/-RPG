@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>유기사 RPG – 끝없는 여정</title>
+<title>유기사 RPG – 자동사냥+전직+맵</title>
 
 <style>
 body{
@@ -86,6 +86,10 @@ body{
 .btn.job{
  background:linear-gradient(90deg,#ffd700,#ff4d4d,#9b4dff);
 }
+.btn.auto{
+ background:linear-gradient(90deg,#00ff9b,#00a676);
+ margin-top:4px;
+}
 .log{
  text-align:center;
  margin-top:8px;
@@ -117,6 +121,7 @@ body{
 
 <button id="upgradeBtn" class="btn" onclick="upgrade()">🔧 강화 (<span id="upgradeCost">20</span>💰)</button>
 <button id="jobBtn" class="btn job" onclick="jobChange()" style="display:none;">🔮 전직</button>
+<button id="autoBtn" class="btn auto" onclick="toggleAuto()">🤖 자동사냥 OFF</button>
 
 <div id="log" class="log">점프맵이 시작되었다…</div>
 
@@ -170,12 +175,34 @@ function load(){
  Object.assign(window,s);
 }
 
-/* ===== 지역 ===== */
-function areaIndex(){
- let i=0;
- for(let a=0;a<areas.length;a++)
-  if(playerLv>=areas[a].lv)i=a;
- return i;
+/* ===== UI 요소 ===== */
+const playerLvSpan = document.getElementById("playerLv");
+const atkSpan = document.getElementById("atk");
+const upgradeLvSpan = document.getElementById("upgradeLv");
+const coinSpan = document.getElementById("coin");
+const expTextSpan = document.getElementById("expText");
+const jobTextSpan = document.getElementById("jobText");
+const upgradeCostSpan = document.getElementById("upgradeCost");
+const hpFillElem = document.getElementById("hpFill");
+const monsterNameElem = document.getElementById("monsterName");
+const areaTextElem = document.getElementById("areaText");
+const logElem = document.getElementById("log");
+const upgradeBtnElem = document.getElementById("upgradeBtn");
+const jobBtnElem = document.getElementById("jobBtn");
+const autoBtnElem = document.getElementById("autoBtn");
+
+/* ===== UI 갱신 ===== */
+function updateUI(){
+    hpFillElem.style.width = (monsterHp / monsterMaxHp * 100) + "%";
+    playerLvSpan.textContent = playerLv;
+    expTextSpan.textContent = `${exp}/${nextExp}`;
+    atkSpan.textContent = atk;
+    coinSpan.textContent = coins;
+    upgradeLvSpan.textContent = upgradeLv;
+    upgradeCostSpan.textContent = 20 + upgradeLv*6;
+    jobTextSpan.textContent = job;
+    if(upgradeLv >= 10) upgradeBtnElem.classList.add("awaken");
+    save();
 }
 
 /* ===== 몬스터 생성 ===== */
@@ -193,11 +220,18 @@ function spawnMonster(){
  updateUI();
 }
 
+/* ===== 지역 ===== */
+function areaIndex(){
+ let i=0;
+ for(let a=0;a<areas.length;a++)
+  if(playerLv>=areas[a].lv)i=a;
+ return i;
+}
+
 /* ===== 전투 ===== */
 function attack(){
  monsterHp-=atk;
  hitSound.play();
-
  if(monsterHp<=0){
   killSound.play();
   kills++;
@@ -259,6 +293,8 @@ function checkJob(){
  if(playerLv>=20 && jobStage===0) jobBtnElem.style.display="block";
  if(playerLv>=40 && jobStage===1) jobBtnElem.style.display="block";
  if(playerLv>=60 && jobStage===2) jobBtnElem.style.display="block";
+ // 자동 전직 처리
+ if(autoHunt) autoJob();
 }
 function jobChange(){
  if(jobStage===0){
@@ -272,40 +308,24 @@ function jobChange(){
  logElem.textContent=`🌟 전직 완료! ${job}`;
  updateUI();
 }
+function autoJob(){
+ if(jobStage===0 && playerLv>=20) jobChange();
+ else if(jobStage===1 && playerLv>=40) jobChange();
+ else if(jobStage===2 && playerLv>=60) jobChange();
+}
 
-/* ===== UI 요소 가져오기 ===== */
-const playerLvSpan = document.getElementById("playerLv");
-const atkSpan = document.getElementById("atk");
-const upgradeLvSpan = document.getElementById("upgradeLv");
-const coinSpan = document.getElementById("coin");
-const expTextSpan = document.getElementById("expText");
-const jobTextSpan = document.getElementById("jobText");
-const upgradeCostSpan = document.getElementById("upgradeCost");
-const hpFillElem = document.getElementById("hpFill");
-const monsterNameElem = document.getElementById("monsterName");
-const areaTextElem = document.getElementById("areaText");
-const logElem = document.getElementById("log");
-const upgradeBtnElem = document.getElementById("upgradeBtn");
-const jobBtnElem = document.getElementById("jobBtn");
-
-/* ===== UI 갱신 ===== */
-function updateUI(){
-    // 몬스터 HP 바
-    hpFillElem.style.width = (monsterHp / monsterMaxHp * 100) + "%";
-
-    // 플레이어 정보
-    playerLvSpan.textContent = playerLv;
-    expTextSpan.textContent = `${exp}/${nextExp}`;
-    atkSpan.textContent = atk;
-    coinSpan.textContent = coins;
-    upgradeLvSpan.textContent = upgradeLv;
-    upgradeCostSpan.textContent = 20 + upgradeLv*6;
-    jobTextSpan.textContent = job;
-
-    // 강화 10렙 이상일 때 버튼 스타일
-    if(upgradeLv >= 10) upgradeBtnElem.classList.add("awaken");
-
-    save();
+/* ===== 자동사냥 ===== */
+let autoHunt=false;
+let autoInterval=null;
+function toggleAuto(){
+ autoHunt=!autoHunt;
+ if(autoHunt){
+   autoBtnElem.textContent="🤖 자동사냥 ON";
+   autoInterval=setInterval(attack,200);
+ }else{
+   autoBtnElem.textContent="🤖 자동사냥 OFF";
+   clearInterval(autoInterval);
+ }
 }
 
 /* ===== 시작 ===== */
