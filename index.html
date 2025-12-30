@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>유기사 RPG – 자동사냥 + 전직 버튼</title>
+<title>유기사 RPG – 자동사냥 + 전직 + XP 보너스</title>
 <style>
 body{margin:0;height:100vh;background:radial-gradient(circle at top,#2a2d44,#000);
 font-family:'Segoe UI',sans-serif;color:#e6e8ff;display:flex;justify-content:center;align-items:center;}
@@ -26,6 +26,7 @@ border-radius:30px;padding:18px;box-shadow:0 0 60px rgba(0,0,0,.95);}
 </head>
 <body>
 <div class="container">
+
 <div class="hud">
  <div class="hud-box">LV<span id="playerLv">1</span></div>
  <div class="hud-box">직업<span id="jobText">우유참치</span></div>
@@ -157,7 +158,10 @@ function attack(){
   let drop = Math.random();
   if(drop<0.05){coins+=100; logElem.textContent="🌈 무지개 골드 획득!!!";}
   else{coins += Math.floor((10+areaIndex()*6)*goldBonus);}
-  exp += 8 + areaIndex()*6;
+  
+  // XP 2배 + 강화/직업 보너스
+  exp += Math.floor((8 + areaIndex()*6) * (1 + upgradeLv*0.1 + goldBonus));
+
   levelUp();
   spawnMonster();
  }
