@@ -185,8 +185,8 @@ function spawnMonster(){
  monsterHp=monsterMaxHp;
 
  const name=monsters[a][Math.floor(Math.random()*monsters[a].length)];
- monsterName.textContent=name;
- areaText.textContent=areas[a].name;
+ monsterNameElem.textContent=name;
+ areaTextElem.textContent=areas[a].name;
 
  if(a===5 && name.includes("보스")) bossSound.play();
 
@@ -202,11 +202,10 @@ function attack(){
   killSound.play();
   kills++;
 
-  // 💰 골드 확률
   let drop=Math.random();
   if(drop<0.05){
     coins+=100;
-    log.textContent="🌈 무지개 골드 획득!!!";
+    logElem.textContent="🌈 무지개 골드 획득!!!";
   }else{
     coins+=Math.floor((10+areaIndex()*6)*goldBonus);
   }
@@ -226,7 +225,7 @@ function levelUp(){
   nextExp=Math.floor(nextExp*1.5);
   atk++;
   levelSound.play();
-  log.textContent=`🎉 레벨업! LV ${playerLv}`;
+  logElem.textContent=`🎉 레벨업! LV ${playerLv}`;
  }
  checkJob();
 }
@@ -235,7 +234,7 @@ function levelUp(){
 function upgrade(){
  const cost=20+upgradeLv*6;
  if(coins<cost){
-  log.textContent="💸 골드 부족!";
+  logElem.textContent="💸 골드 부족!";
   failSound.play();
   return;
  }
@@ -247,19 +246,19 @@ function upgrade(){
   atk+=upgradeLv>=10?2:1;
   upgradeChance=Math.max(10,upgradeChance-2);
   upgradeSound.play();
-  log.textContent="✨ 강화 성공!";
+  logElem.textContent="✨ 강화 성공!";
  }else{
   failSound.play();
-  log.textContent="💥 강화 실패…";
+  logElem.textContent="💥 강화 실패…";
  }
  updateUI();
 }
 
 /* ===== 전직 ===== */
 function checkJob(){
- if(playerLv>=20 && jobStage===0) jobBtn.style.display="block";
- if(playerLv>=40 && jobStage===1) jobBtn.style.display="block";
- if(playerLv>=60 && jobStage===2) jobBtn.style.display="block";
+ if(playerLv>=20 && jobStage===0) jobBtnElem.style.display="block";
+ if(playerLv>=40 && jobStage===1) jobBtnElem.style.display="block";
+ if(playerLv>=60 && jobStage===2) jobBtnElem.style.display="block";
 }
 function jobChange(){
  if(jobStage===0){
@@ -269,8 +268,8 @@ function jobChange(){
  }else if(jobStage===2){
   job="🌌 유기사"; atk+=20; goldBonus+=0.7; jobStage=3;
  }
- jobBtn.style.display="none";
- log.textContent=`🌟 전직 완료! ${job}`;
+ jobBtnElem.style.display="none";
+ logElem.textContent=`🌟 전직 완료! ${job}`;
  updateUI();
 }
 
@@ -282,19 +281,17 @@ const coinSpan = document.getElementById("coin");
 const expTextSpan = document.getElementById("expText");
 const jobTextSpan = document.getElementById("jobText");
 const upgradeCostSpan = document.getElementById("upgradeCost");
-const hpFill = document.getElementById("hpFill");
-const monsterName = document.getElementById("monsterName");
-const areaText = document.getElementById("areaText");
-const log = document.getElementById("log");
-const upgradeBtn = document.getElementById("upgradeBtn");
-const jobBtn = document.getElementById("jobBtn");
+const hpFillElem = document.getElementById("hpFill");
+const monsterNameElem = document.getElementById("monsterName");
+const areaTextElem = document.getElementById("areaText");
+const logElem = document.getElementById("log");
+const upgradeBtnElem = document.getElementById("upgradeBtn");
+const jobBtnElem = document.getElementById("jobBtn");
 
- const btn=upgradeBtn;
- if(upgradeLv>=10) btn.classList.add("awaken");
-
- function updateUI(){
+/* ===== UI 갱신 ===== */
+function updateUI(){
     // 몬스터 HP 바
-    hpFill.style.width = (monsterHp / monsterMaxHp * 100) + "%";
+    hpFillElem.style.width = (monsterHp / monsterMaxHp * 100) + "%";
 
     // 플레이어 정보
     playerLvSpan.textContent = playerLv;
@@ -306,11 +303,9 @@ const jobBtn = document.getElementById("jobBtn");
     jobTextSpan.textContent = job;
 
     // 강화 10렙 이상일 때 버튼 스타일
-    if(upgradeLv >= 10) upgradeBtn.classList.add("awaken");
+    if(upgradeLv >= 10) upgradeBtnElem.classList.add("awaken");
 
     save();
- }
- save();
 }
 
 /* ===== 시작 ===== */
