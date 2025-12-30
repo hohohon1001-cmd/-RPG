@@ -29,7 +29,7 @@ border-radius:30px;padding:18px;box-shadow:0 0 60px rgba(0,0,0,.95);}
 
 <div class="hud">
  <div class="hud-box">LV<span id="playerLv">1</span></div>
- <div class="hud-box">직업<span id="jobText">초보자</span></div>
+ <div class="hud-box">직업<span id="jobText">멜로우급</span></div>
  <div class="hud-box">ATK<span id="atk">1</span></div>
  <div class="hud-box">강화<span id="upgradeLv">1</span></div>
  <div class="hud-box">💰<span id="coin">0</span></div>
@@ -39,7 +39,7 @@ border-radius:30px;padding:18px;box-shadow:0 0 60px rgba(0,0,0,.95);}
 <div id="areaText" class="area">🌱 초원</div>
 
 <div class="monster" onclick="attack()">
- <div id="monsterName" class="monster-name">슬라임</div>
+ <div id="monsterName" class="monster-name">멜님</div>
  <div class="hp-bar"><div id="hpFill" class="hp-fill"></div></div>
 </div>
 
@@ -68,16 +68,16 @@ let soundEnabled=false;
 
 /* ===== 지역/몬스터 ===== */
 const areas=[
- {name:"🌱 초원",lv:1},{name:"🌴 밀림",lv:10},{name:"❄ 설산",lv:20},
- {name:"🏜 사막",lv:30},{name:"🌋 화산",lv:40},{name:"🌌 공허",lv:50}
+ {name:"🌱 잼못타",lv:1},{name:"🌴 급못타",lv:10},{name:"❄ 유기사의 차가운 농담",lv:20},
+ {name:"🏜 식탁",lv:30},{name:"🌋 팀나빠",lv:40},{name:"🌌 유기사 디스코드",lv:50}
 ];
 const monsters=[
- ["슬라임","돌슬라임"],
- ["고블린","독고블린"],
- ["빙결수","눈늑대"],
- ["모래정령","사막전사"],
- ["화염령","용암괴물"],
- ["공허수","차원포식자","보스: 공허의 군주"]
+ ["어려워 하시는 멜님","벨키님"],
+ ["또 못깨고 있는 멜님","먼저깬 우참님"],
+ ["왕이 넘어지면? 킹콩 ㅋㅋㅋ","아니 실수로 라이벌 들어감"],
+ ["옷에 떨어진 밥풀","후식으론 준브레드 엉덩이"],
+ ["짭 유기사","멜님으로 위장한 준브레드"],
+ ["자칼님","흑화한 멜님","보스: 유기사ok"]
 ];
 
 /* ===== UI ===== */
@@ -214,7 +214,7 @@ function checkJob(){
 }
 function jobChange(){
  if(jobStage===0){ job="⚔ 우유참치"; atk+=5; jobStage=1;}
- else if(jobStage===1){ job="🔥 준브레드"; atk+=10; goldBonus+=0.3; jobStage=2;}
+ else if(jobStage===1){ job="🔥 준브레드엉덩이"; atk+=10; goldBonus+=0.3; jobStage=2;}
  else if(jobStage===2){ job="🌌 유기사"; atk+=20; goldBonus+=0.7; jobStage=3;}
  jobBtnElem.style.display="none";
  logElem.textContent = `🌟 전직 완료! ${job}`;
