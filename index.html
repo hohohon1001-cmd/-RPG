@@ -50,7 +50,64 @@ border-radius:30px;padding:18px;box-shadow:0 0 60px rgba(0,0,0,.95);}
 <div id="log" class="log">게임 시작! 화면 클릭 후 사운드 활성화</div>
 
 <!-- 사운드 -->
-<audio id="hitSound" src="https://assets.mixkit.co/sfx/preview/mixkit-quick-hit-2187.mp3"></audio>
+// 사운드 활성화 함수 (사용자 클릭 필요)
+function enableSound() {
+  [hitSound, killSound, upgradeSound, failSound, levelSound, bossSound].forEach(s => {
+    s.pause();
+    s.currentTime = 0;
+    s.volume = 1;
+    // 재생 시도 (브라우저 정책에 의해 사용자가 클릭해야 재생 가능)
+    s.play().catch(()=>{});
+    s.pause();
+  });
+  soundEnabled = true;
+  logElem.textContent = "🔊 사운드 활성화 완료!";
+}
+function attack(){
+  monsterHp -= atk;
+  if(soundEnabled){ 
+    hitSound.currentTime = 0; 
+    hitSound.play().catch(()=>{}); 
+  }
+  if(monsterHp <= 0){
+    kills++;
+    if(soundEnabled){ 
+      killSound.currentTime = 0; 
+      killSound.play().catch(()=>{}); 
+    }
+    // 골드, XP 처리...
+    spawnMonster();
+  }
+  updateUI();
+}
+
+function upgrade(){
+  // 강화 로직...
+  if(success){
+    if(soundEnabled){ 
+      upgradeSound.currentTime = 0; 
+      upgradeSound.play().catch(()=>{}); 
+    }
+  } else {
+    if(soundEnabled){ 
+      failSound.currentTime = 0; 
+      failSound.play().catch(()=>{}); 
+    }
+  }
+  updateUI();
+}
+
+function jobChange(){
+  // 전직 로직...
+  if(soundEnabled){ 
+    upgradeSound.currentTime = 0; 
+    upgradeSound.play().catch(()=>{}); 
+  }
+  updateUI();
+}
+// 클릭 이벤트로 한 번만 실행
+document.body.addEventListener("click", enableSound, { once: true });
+ <audio id="hitSound" src="https://assets.mixkit.co/sfx/preview/mixkit-quick-hit-2187.mp3"></audio>
 <audio id="killSound" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3"></audio>
 <audio id="upgradeSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
 <audio id="failSound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3"></audio>
