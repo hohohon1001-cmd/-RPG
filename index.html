@@ -3,64 +3,70 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>유기사 RPG</title>
+<title>유기사 RPG – 끝없는 강화</title>
 
 <style>
 body {
     margin: 0;
+    height: 100vh;
     background: radial-gradient(circle at top, #2b2d31, #000);
-    color: #dbdee1;
     font-family: 'Segoe UI', sans-serif;
+    color: #dbdee1;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
 }
 
 .container {
-    width: 92%;
+    width: 94%;
     max-width: 480px;
-    background: #1e1f22;
-    border-radius: 24px;
-    padding: 16px;
-    box-shadow: 0 0 40px rgba(0,0,0,.8);
+    background: linear-gradient(180deg,#1e1f22,#121316);
+    border-radius: 28px;
+    padding: 18px;
+    box-shadow: 0 0 50px rgba(0,0,0,.9);
 }
 
+/* HUD */
 .hud {
     display: flex;
     gap: 6px;
 }
-.hud div {
+.hud-box {
     flex: 1;
-    background: #111;
-    border-radius: 14px;
+    background: #0f1012;
+    border-radius: 16px;
     text-align: center;
     padding: 6px 0;
     font-size: 12px;
 }
-.hud span {
+.hud-box span {
     display: block;
     font-size: 18px;
     font-weight: bold;
 }
 
+/* AREA */
 .area {
     text-align: center;
-    margin: 8px 0;
+    margin: 10px 0 6px;
     color: #9fa1ff;
+    font-weight: bold;
 }
 
+/* MONSTER */
 .monster {
-    background: #0f1012;
-    border-radius: 22px;
-    padding: 24px;
+    background: radial-gradient(circle at top,#1b1c20,#0b0c0f);
+    border-radius: 26px;
+    padding: 26px 14px;
     text-align: center;
     cursor: pointer;
+    user-select: none;
 }
 .monster-name {
     font-size: 22px;
 }
-.hp {
+.hp-bar {
+    width: 100%;
     height: 14px;
     background: #111;
     border-radius: 10px;
@@ -69,40 +75,44 @@ body {
 }
 .hp-fill {
     height: 100%;
-    background: linear-gradient(90deg, #ff3b3b, #ff8b8b);
+    background: linear-gradient(90deg,#ff3b3b,#ff7b7b);
     width: 100%;
+    transition: width .1s;
 }
 
+/* BUTTON */
 .btn {
     width: 100%;
     margin-top: 8px;
-    padding: 12px;
+    padding: 14px;
     font-size: 15px;
     font-weight: bold;
-    border-radius: 16px;
+    border-radius: 18px;
     border: none;
-    background: linear-gradient(#5865F2,#404EED);
-    color: white;
     cursor: pointer;
+    color: white;
+    background: linear-gradient(#5865F2,#404EED);
 }
 
+.btn.awaken {
+    background: linear-gradient(90deg,gold,red,purple);
+}
+
+/* SHOP */
 .shop {
     margin-top: 10px;
-    background: #111;
-    border-radius: 16px;
+    background: #0f1012;
+    border-radius: 18px;
     padding: 10px;
     font-size: 13px;
 }
 
+/* LOG */
 .log {
     text-align: center;
-    font-size: 13px;
     margin-top: 6px;
+    font-size: 13px;
     color: #aaa;
-}
-
-.awaken {
-    background: linear-gradient(90deg, gold, red, purple);
 }
 </style>
 </head>
@@ -110,23 +120,28 @@ body {
 <body>
 <div class="container">
 
+<!-- HUD -->
 <div class="hud">
-    <div>LV<span id="playerLv">1</span></div>
-    <div>ATK<span id="atk">1</span></div>
-    <div>강화<span id="upgradeLv">1</span></div>
-    <div>💰<span id="coin">0</span></div>
+    <div class="hud-box">LV<span id="playerLv">1</span></div>
+    <div class="hud-box">EXP<span id="expText">0/10</span></div>
+    <div class="hud-box">ATK<span id="atk">1</span></div>
+    <div class="hud-box">💰<span id="coin">0</span></div>
 </div>
 
 <div id="areaText" class="area">🌱 초원</div>
 
+<!-- MONSTER -->
 <div class="monster" onclick="attack()">
     <div id="monsterName" class="monster-name">슬라임</div>
-    <div class="hp"><div id="hpFill" class="hp-fill"></div></div>
+    <div class="hp-bar">
+        <div id="hpFill" class="hp-fill"></div>
+    </div>
 </div>
 
-<button id="upgradeBtn" class="btn" onclick="upgrade()">강화 (<span id="chance">90</span>%)</button>
-<button class="btn" onclick="toggleIdle()">방치: <span id="idleText">OFF</span></button>
+<button id="upgradeBtn" class="btn" onclick="upgrade()">🔧 강화 (<span id="chanceText">90</span>%)</button>
+<button class="btn" onclick="toggleIdle()">⏳ 방치: <span id="idleText">OFF</span></button>
 
+<!-- SHOP -->
 <div class="shop">
     🛒 상점<br>
     <button class="btn" onclick="buyAtk()">ATK +1 (50💰)</button>
@@ -136,54 +151,78 @@ body {
 
 </div>
 
-<!-- 사운드 -->
+<!-- SOUND -->
 <audio id="hitSound" src="https://assets.mixkit.co/sfx/preview/mixkit-quick-hit-2187.mp3"></audio>
 <audio id="upgradeSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
 
 <script>
-/* ===== 기본 스탯 ===== */
+/* =====================
+   PLAYER
+===================== */
 let coins = 0;
 let atk = 1;
-let upgradeLv = 1;
-let upgradeChance = 90;
 
 let playerLv = 1;
 let exp = 0;
 let nextExp = 10;
 
+let upgradeLv = 1;
+let upgradeChance = 90;
+
+/* =====================
+   MONSTER
+===================== */
 let monsterHp = 10;
 let monsterMaxHp = 10;
 let kills = 0;
 
+/* =====================
+   IDLE
+===================== */
 let idle = false;
 let idleTimer = null;
 
-/* ===== 지역 ===== */
+/* =====================
+   AREA DATA
+===================== */
 const areas = [
-    { name:"🌱 초원", minLv:1 },
-    { name:"🌴 밀림", minLv:10 },
-    { name:"❄ 눈", minLv:20 },
-    { name:"🌋 화산", minLv:30 },
-    { name:"🌌 공허", minLv:40 }
+    {name:"🌱 초원", minLv:1},
+    {name:"🌴 밀림", minLv:10},
+    {name:"❄ 눈", minLv:20},
+    {name:"🌋 화산", minLv:30},
+    {name:"🌌 공허", minLv:40}
 ];
 
-const monsters = ["슬라임","고블린","빙결수","화염령","이름 없는 존재"];
+const monsters = [
+    "슬라임","고블린","빙결수","화염령","이름 없는 존재"
+];
 
-/* ===== 저장 ===== */
+/* =====================
+   SAVE / LOAD
+===================== */
 function save() {
-    localStorage.setItem("yugisaSave", JSON.stringify({
-        coins, atk, upgradeLv, upgradeChance,
-        playerLv, exp, nextExp, kills
+    localStorage.setItem("yugisaRPG", JSON.stringify({
+        coins, atk, playerLv, exp, nextExp,
+        upgradeLv, upgradeChance, kills
     }));
 }
 
 function load() {
-    const s = JSON.parse(localStorage.getItem("yugisaSave"));
+    const s = JSON.parse(localStorage.getItem("yugisaRPG"));
     if (!s) return;
-    Object.assign(window, s);
+    coins = s.coins;
+    atk = s.atk;
+    playerLv = s.playerLv;
+    exp = s.exp;
+    nextExp = s.nextExp;
+    upgradeLv = s.upgradeLv;
+    upgradeChance = s.upgradeChance;
+    kills = s.kills;
 }
 
-/* ===== 지역 계산 ===== */
+/* =====================
+   AREA INDEX
+===================== */
 function areaIndex() {
     let idx = 0;
     for (let i=0;i<areas.length;i++) {
@@ -192,45 +231,56 @@ function areaIndex() {
     return idx;
 }
 
-/* ===== 몬스터 ===== */
+/* =====================
+   SPAWN MONSTER
+===================== */
 function spawnMonster() {
     const area = areaIndex();
-    monsterMaxHp = 15 + kills*3 + area*20;
+    monsterMaxHp = 15 + area*20 + kills*2;
     monsterHp = monsterMaxHp;
-    document.getElementById("monsterName").textContent = monsters[area];
-    document.getElementById("areaText").textContent = areas[area].name;
+
+    monsterName.textContent = monsters[area];
+    areaText.textContent = areas[area].name;
+
     updateUI();
 }
 
-/* ===== 공격 ===== */
+/* =====================
+   ATTACK
+===================== */
 function attack() {
     monsterHp -= atk;
     hitSound.play();
 
     if (monsterHp <= 0) {
         kills++;
+
         coins += 10 + areaIndex()*5;
+        exp += 6 + areaIndex()*4;
 
-        exp += 5 + areaIndex()*3;
         levelUpCheck();
-
         spawnMonster();
     }
     updateUI();
 }
 
-/* ===== 레벨업 ===== */
+/* =====================
+   LEVEL UP
+===================== */
 function levelUpCheck() {
     while (exp >= nextExp) {
         exp -= nextExp;
         playerLv++;
-        nextExp = Math.floor(nextExp*1.4);
+        nextExp = Math.floor(nextExp * 1.5);
         atk++;
+
         log.textContent = `🎉 레벨업! LV ${playerLv}`;
     }
 }
 
-/* ===== 강화 ===== */
+/* =====================
+   UPGRADE
+===================== */
 function upgrade() {
     const cost = 20 + upgradeLv*10;
     if (coins < cost) {
@@ -240,12 +290,13 @@ function upgrade() {
 
     coins -= cost;
 
-    const realChance = upgradeLv >= 10 ? Math.min(95, upgradeChance+10) : upgradeChance;
+    let realChance = upgradeChance;
+    if (upgradeLv >= 10) realChance = Math.min(95, upgradeChance + 10);
 
     if (Math.random()*100 <= realChance) {
         upgradeLv++;
         atk += upgradeLv >= 10 ? 2 : 1;
-        upgradeChance = Math.max(10, upgradeChance-2);
+        upgradeChance = Math.max(10, upgradeChance - 2);
         upgradeSound.play();
         log.textContent = "🔥 강화 성공!";
     } else {
@@ -254,7 +305,9 @@ function upgrade() {
     updateUI();
 }
 
-/* ===== 상점 ===== */
+/* =====================
+   SHOP
+===================== */
 function buyAtk() {
     if (coins < 50) return;
     coins -= 50;
@@ -263,10 +316,13 @@ function buyAtk() {
     updateUI();
 }
 
-/* ===== 방치 ===== */
+/* =====================
+   IDLE
+===================== */
 function toggleIdle() {
     idle = !idle;
     idleText.textContent = idle ? "ON" : "OFF";
+
     if (idle) {
         idleTimer = setInterval(attack, 1000);
     } else {
@@ -274,14 +330,17 @@ function toggleIdle() {
     }
 }
 
-/* ===== UI ===== */
+/* =====================
+   UI
+===================== */
 function updateUI() {
-    hpFill.style.width = (monsterHp/monsterMaxHp*100)+"%";
+    hpFill.style.width = (monsterHp / monsterMaxHp * 100) + "%";
+
     coin.textContent = coins;
     atk.textContent = atk;
-    upgradeLv.textContent = upgradeLv;
-    chance.textContent = upgradeChance;
     playerLv.textContent = playerLv;
+    expText.textContent = `${exp}/${nextExp}`;
+    chanceText.textContent = upgradeChance;
 
     if (upgradeLv >= 10) {
         upgradeBtn.classList.add("awaken");
@@ -291,7 +350,9 @@ function updateUI() {
     save();
 }
 
-/* ===== 시작 ===== */
+/* =====================
+   START
+===================== */
 load();
 spawnMonster();
 updateUI();
