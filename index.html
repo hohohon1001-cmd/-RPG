@@ -2,254 +2,259 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<title>Yugisa RPG</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>유기사 RPG</title>
 
 <style>
 body{
   margin:0;
-  font-family: 'Pretendard', Arial, sans-serif;
-  background: linear-gradient(180deg,#0f2027,#203a43,#2c5364);
-  color:white;
+  font-family:system-ui;
+  background:#0b1020;
+  color:#fff;
 }
-.game{
+.app{
+  max-width:1100px;
+  margin:auto;
+  padding:16px;
   display:grid;
-  grid-template-columns: 260px 1fr 260px;
-  gap:14px;
-  padding:14px;
+  grid-template-columns:420px 1fr;
+  gap:16px;
 }
 .card{
-  background: rgba(0,0,0,0.45);
-  border-radius:14px;
+  background:rgba(255,255,255,0.05);
   padding:12px;
-  box-shadow:0 0 15px rgba(0,0,0,0.4);
+  border-radius:12px;
 }
-button{
-  background: linear-gradient(135deg,#00c6ff,#0072ff);
-  border:none;
-  border-radius:10px;
-  padding:10px;
-  color:white;
-  cursor:pointer;
-  font-weight:bold;
-}
-button:hover{ filter:brightness(1.15); }
-
-.map-grid{
+.hud{
   display:grid;
-  grid-template-columns: repeat(2,1fr);
+  grid-template-columns:repeat(3,1fr);
   gap:8px;
 }
-.map-btn{
-  background: rgba(255,255,255,0.1);
-  border:1px solid rgba(255,255,255,0.2);
+.hud div{
+  background:rgba(255,255,255,0.08);
+  padding:8px;
+  border-radius:8px;
+  text-align:center;
 }
-.map-btn.locked{
-  opacity:0.4;
+.btn{
+  padding:8px 12px;
+  border:none;
+  border-radius:8px;
+  background:#6c7cff;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+.map-grid{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.map-node{
+  flex:1 1 30%;
+  background:rgba(255,255,255,0.08);
+  padding:10px;
+  border-radius:10px;
+  text-align:center;
+  cursor:pointer;
+}
+.map-node.locked{
+  opacity:.4;
   cursor:not-allowed;
 }
-
-.bar{
-  height:16px;
-  background:#333;
+.hp-bar,.mp-bar{
+  height:10px;
+  background:#222;
   border-radius:8px;
   overflow:hidden;
 }
-.bar-inner{
+.hp-fill{
   height:100%;
-  background:linear-gradient(90deg,#00ff99,#00ccff);
+  background:linear-gradient(90deg,#ff4d4d,#ff9b9b);
 }
-
-.center{
-  text-align:center;
+.mp-fill{
+  height:100%;
+  background:linear-gradient(90deg,#4db6ff,#6befff);
 }
-.small{ font-size:13px; opacity:0.85; }
+.log{
+  height:120px;
+  overflow:auto;
+  font-size:13px;
+}
 </style>
 </head>
 
 <body>
+<div class="app">
 
-<div class="game">
-
-  <!-- LEFT -->
-  <div>
-    <div class="card">
-      <div><b>레벨</b> <span id="lv">1</span></div>
-      <div class="small">EXP</div>
-      <div class="bar"><div id="expBar" class="bar-inner"></div></div>
-      <div class="small">MP</div>
-      <div class="bar"><div id="mpBar" class="bar-inner"></div></div>
-    </div>
-
-    <div class="card map">
-      <b>🗺 지도</b>
-      <div class="map-grid" id="mapGrid"></div>
-    </div>
+<!-- LEFT -->
+<div>
+  <div class="card hud">
+    <div>LV<br><b id="playerLv">1</b></div>
+    <div>ATK<br><b id="atk">1</b></div>
+    <div>강화<br><b id="upgradeLv">1</b></div>
+    <div>💰<br><b id="coin">0</b></div>
+    <div>EXP<br><b id="expText">0/5</b></div>
+    <div>직업<br><b id="jobText">멜로우급</b></div>
   </div>
 
-  <!-- CENTER -->
-  <div>
-    <div class="card center">
-      <div id="areaText">🌱 잼못타</div>
-      <h2 id="monsterName">몬스터</h2>
-      <div class="bar"><div id="hpBar" class="bar-inner"></div></div>
-      <br>
-      <button onclick="attack()">⚔ 공격</button>
-    </div>
+  <div class="card">
+    <b>지도</b>
+    <div class="map-grid" id="mapGrid"></div>
   </div>
 
-  <!-- RIGHT -->
-  <div>
-    <div class="card">
-      <b>로그</b>
-      <div id="log" class="small">게임 시작!</div>
+  <div class="card">
+    <b id="monsterName">멜님</b>
+    <div class="hp-bar"><div class="hp-fill" id="hpFill"></div></div>
+    <div class="mp-bar" style="margin-top:6px"><div class="mp-fill" id="mpFill"></div></div>
+    <div style="margin-top:8px">
+      <button class="btn" onclick="attack()">공격</button>
+      <button class="btn" onclick="upgrade()">강화</button>
+      <button class="btn" onclick="toggleAuto()">자동</button>
     </div>
   </div>
+</div>
+
+<!-- RIGHT -->
+<div>
+  <div class="card">
+    <b>로그</b>
+    <div class="log" id="log"></div>
+  </div>
+</div>
 
 </div>
 
 <!-- 사운드 -->
-<audio id="hitSound" src="https://cdn.pixabay.com/audio/2022/03/15/audio_8e8b3c87e4.mp3"></audio>
-<audio id="failSound" src="https://cdn.pixabay.com/audio/2022/03/10/audio_93f9f6b60d.mp3"></audio>
-<audio id="bgm" src="https://cdn.pixabay.com/audio/2022/10/16/audio_5db2c7a3fa.mp3" loop></audio>
+<audio id="hitSound" src="https://assets.mixkit.co/sfx/preview/mixkit-quick-hit-2187.mp3"></audio>
+<audio id="killSound" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3"></audio>
 
 <script>
-/* =====================
-   기본 상태
-===================== */
-let playerLv=1, exp=0, nextExp=50;
-let mp=50, maxMp=50;
-let atk=5;
+/* ===== 게임 상태 ===== */
+let coins=0, atk=1, playerLv=1, exp=0, nextExp=5;
+let upgradeLv=1;
+let monsterHp=20, monsterMaxHp=20;
+let auto=false, autoInt=null;
 let currentArea=0;
-let monsterHp=30, monsterMaxHp=30;
 
+/* 지역 / 몬스터 (원본 유지) */
 const areas=[
-  {name:"🌱 잼못타", lv:1},
-  {name:"🌴 급못타", lv:10},
-  {name:"❄ 유기사의 차가운 농담", lv:20},
-  {name:"🏜 식탁", lv:30}
+ {name:"🌱 잼못타",lv:1},
+ {name:"🌴 급못타",lv:10},
+ {name:"❄ 유기사의 차가운 농담",lv:20},
+ {name:"🏜 식탁",lv:30},
+ {name:"🌋 팀 나빠",lv:40},
+ {name:"🌌 유기사 디스코드",lv:50}
 ];
 
 const monsters=[
-  ["슬라임","버섯"],
-  ["정글몹","독뱀"],
-  ["설인","얼음골렘"],
-  ["미이라","사막벌"]
+ ["어려워 하시는 멜님","벨키님"],
+ ["또 못깨는 멜님","우참님"],
+ ["왕이 넘어지면? 킹콩","라이벌"],
+ ["옷에 떨어진 밥풀"],
+ ["짭 유기사"],
+ ["자칼님","보스: 유기사ok"]
 ];
 
-/* =====================
-   DOM
-===================== */
-const lvElem=document.getElementById("lv");
-const expBar=document.getElementById("expBar");
-const mpBar=document.getElementById("mpBar");
-const monsterName=document.getElementById("monsterName");
-const hpBar=document.getElementById("hpBar");
-const log=document.getElementById("log");
-const areaText=document.getElementById("areaText");
+/* UI */
+const logEl=document.getElementById("log");
 const mapGrid=document.getElementById("mapGrid");
 
-const hitSound=document.getElementById("hitSound");
-const failSound=document.getElementById("failSound");
-const bgm=document.getElementById("bgm");
+/* 로그 */
+function log(t){
+  const d=document.createElement("div");
+  d.textContent=t;
+  logEl.prepend(d);
+}
 
-/* =====================
-   사운드 활성화
-===================== */
-document.body.addEventListener("click",()=>{
-  bgm.volume=0.4;
-  bgm.play().catch(()=>{});
-},{once:true});
-
-/* =====================
-   지도
-===================== */
+/* 지도 */
 function renderMap(){
   mapGrid.innerHTML="";
   areas.forEach((a,i)=>{
-    const b=document.createElement("button");
-    b.className="map-btn";
-    b.textContent=a.name;
-    if(playerLv<a.lv){
-      b.classList.add("locked");
-      b.onclick=()=>failSound.play();
-    }else{
-      b.onclick=()=>moveArea(i);
-    }
-    mapGrid.appendChild(b);
+    const d=document.createElement("div");
+    d.className="map-node"+(playerLv<a.lv?" locked":"");
+    d.innerHTML=`<b>${a.name}</b><br><small>LV ${a.lv}</small>`;
+    d.onclick=()=>{
+      if(playerLv<a.lv){log("레벨 부족");return;}
+      currentArea=i;
+      spawnMonster();
+      log(a.name+" 이동");
+    };
+    mapGrid.appendChild(d);
   });
 }
 
-function moveArea(i){
-  currentArea=i;
-  areaText.textContent=areas[i].name;
-  spawnMonster();
-  log.textContent=`🗺 ${areas[i].name} 이동`;
-}
-
-/* =====================
-   몬스터
-===================== */
+/* 몬스터 */
 function spawnMonster(){
-  const list=monsters[currentArea];
-  monsterName.textContent=list[Math.floor(Math.random()*list.length)];
   monsterMaxHp=30+currentArea*40;
   monsterHp=monsterMaxHp;
+  document.getElementById("monsterName").textContent=
+    monsters[currentArea][Math.floor(Math.random()*monsters[currentArea].length)];
   updateUI();
 }
 
-/* =====================
-   전투
-===================== */
+/* 전투 */
 function attack(){
-  if(mp<5){
-    failSound.play();
-    log.textContent="마나 부족!";
-    return;
-  }
-  mp-=5;
   monsterHp-=atk;
-  hitSound.play();
+  document.getElementById("hitSound").play();
   if(monsterHp<=0){
-    exp+=15;
-    log.textContent="몬스터 처치!";
+    document.getElementById("killSound").play();
+    coins+=10+currentArea*5;
+    exp+=5+currentArea*3;
+    levelUp();
     spawnMonster();
   }
-  levelCheck();
   updateUI();
 }
 
-/* =====================
-   레벨업
-===================== */
-function levelCheck(){
-  if(exp>=nextExp){
+/* 레벨업 */
+function levelUp(){
+  while(exp>=nextExp){
     exp-=nextExp;
+    nextExp=Math.floor(nextExp*1.3);
     playerLv++;
-    nextExp=Math.floor(nextExp*1.4);
-    maxMp+=10;
-    mp=maxMp;
-    log.textContent=`🎉 레벨업! LV ${playerLv}`;
-    renderMap();
+    atk++;
+    log("레벨업!");
   }
 }
 
-/* =====================
-   UI
-===================== */
-function updateUI(){
-  lvElem.textContent=playerLv;
-  expBar.style.width=(exp/nextExp*100)+"%";
-  mpBar.style.width=(mp/maxMp*100)+"%";
-  hpBar.style.width=(monsterHp/monsterMaxHp*100)+"%";
+/* 강화 */
+function upgrade(){
+  if(coins<20){log("골드 부족");return;}
+  coins-=20;
+  if(Math.random()<0.8){
+    upgradeLv++; atk++;
+    log("강화 성공");
+  }else log("강화 실패");
+  updateUI();
 }
 
-/* =====================
-   시작
-===================== */
+/* 자동 */
+function toggleAuto(){
+  auto=!auto;
+  if(auto){
+    autoInt=setInterval(attack,300);
+    log("자동 시작");
+  }else{
+    clearInterval(autoInt);
+    log("자동 중지");
+  }
+}
+
+/* UI */
+function updateUI(){
+  playerLv.textContent=playerLv;
+  atk.textContent=atk;
+  coin.textContent=coins;
+  upgradeLv.textContent=upgradeLv;
+  expText.textContent=`${exp}/${nextExp}`;
+  hpFill.style.width=(monsterHp/monsterMaxHp*100)+"%";
+}
+
+/* 시작 */
 renderMap();
 spawnMonster();
 updateUI();
 </script>
-
 </body>
 </html>
