@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>유기사 RPG</title>
+
+<style>
+body{
+    margin:0;
+    height:100vh;
+    background:#111;
+    color:white;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    font-family:Arial;
+}
+.container{
+    width:90%;
+    max-width:420px;
+    background:#1e1f22;
+    border-radius:20px;
+    padding:16px;
+}
+.hud{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:10px;
+}
+.box{
+    flex:1;
+    margin:0 4px;
+    background:#000;
+    border-radius:12px;
+    padding:6px 0;
+    text-align:center;
+}
+.monster{
+    background:#000;
+    border-radius:16px;
+    padding:20px;
+    text-align:center;
+    cursor:pointer;
+}
+.hp{
+    height:12px;
+    background:#222;
+    border-radius:8px;
+    overflow:hidden;
+    margin-top:6px;
+}
+.hpfill{
+    height:100%;
+    background:red;
+    width:100%;
+}
+button{
+    width:100%;
+    margin-top:8px;
+    padding:12px;
+    border:none;
+    border-radius:14px;
+    font-size:16px;
+    background:#5865F2;
+    color:white;
+}
+.log{
+    text-align:center;
+    font-size:13px;
+    margin-top:6px;
+    opacity:.7;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<div class="hud">
+    <div class="box">LV<br><span id="lv">1</span></div>
+    <div class="box">ATK<br><span id="atk">1</span></div>
+    <div class="box">💰<br><span id="coin">0</span></div>
+</div>
+
+<div id="area" style="text-align:center">🌱 초원</div>
+
+<div class="monster" onclick="attack()">
+    <div id="mname">슬라임</div>
+    <div class="hp"><div id="hp" class="hpfill"></div></div>
+</div>
+
+<button onclick="upgrade()">강화</button>
+<div class="log" id="log">시작!</div>
+
+</div>
+
+<script>
+let atk=1, coins=0, lv=1, exp=0, next=10;
+let hp=10, max=10, kill=0;
+
+function attack(){
+    hp -= atk;
+    if(hp<=0){
+        kill++;
+        coins+=5;
+        exp+=3;
+        if(exp>=next){
+            exp-=next;
+            lv++;
+            atk++;
+            next*=1.5;
+            log("레벨업!");
+        }
+        spawn();
+    }
+    update();
+}
+
+function spawn(){
+    max=10+kill*3;
+    hp=max;
+    document.getElementById("area").innerText =
+        kill>12?"❄ 눈":kill>6?"🌴 밀림":"🌱 초원";
+}
+
+function upgrade(){
+    if(coins<10) return log("돈 부족");
+    coins-=10;
+    atk++;
+    log("강화 성공");
+    update();
+}
+
+function log(t){ document.getElementById("log").innerText=t; }
+
+function update(){
+    document.getElementById("atk").innerText=atk;
+    document.getElementById("coin").innerText=coins;
+    document.getElementById("lv").innerText=lv;
+    document.getElementById("hp").style.width=(hp/max*100)+"%";
+}
+
+spawn(); update();
+</script>
+</body>
+</html>
