@@ -114,14 +114,56 @@ document.body.addEventListener("click", ()=>{
   logElem.textContent = "🔊 사운드 활성화 완료!";
 },{once:true});
 
-/* ===== 저장/불러오기 ===== */
+/* ===== 저장 ===== */
 function save(){
- localStorage.setItem("yugisaRPG2",JSON.stringify({coins,atk,playerLv,exp,nextExp,upgradeLv,upgradeChance,job,jobStage,goldBonus,kills}));
+  try{
+    const data = {
+      coins: Number(coins) || 0,
+      atk: Number(atk) || 1,
+      playerLv: Number(playerLv) || 1,
+      exp: Number(exp) || 0,
+      nextExp: Number(nextExp) || 10,
+      upgradeLv: Number(upgradeLv) || 1,
+      upgradeChance: Number(upgradeChance) || 90,
+      job: job || "초보자",
+      jobStage: Number(jobStage) || 0,
+      goldBonus: Number(goldBonus) || 1,
+      kills: Number(kills) || 0
+    };
+    localStorage.setItem("yugisaRPG2", JSON.stringify(data));
+    // 선택: 마지막 저장 시간 기록
+    localStorage.setItem("yugisaRPG2_time", String(Date.now()));
+  }catch(e){
+    console.error("Save failed:", e);
+  }
 }
+
+/* ===== 불러오기 ===== */
 function load(){
- const s=JSON.parse(localStorage.getItem("yugisaRPG2"));
- if(!s) return;
- Object.assign(window,s);
+  const raw = localStorage.getItem("yugisaRPG2");
+  if(!raw) return; // 저장 없음 -> 기본값 유지
+  try{
+    const s = JSON.parse(raw);
+    // 타입검사 및 안전 할당 (let 변수에 직접 할당!)
+    if(typeof s !== "object" || s === null) throw new Error("Bad save data");
+    coins = Number(s.coins) || 0;
+    atk = Number(s.atk) || 1;
+    playerLv = Number(s.playerLv) || 1;
+    exp = Number(s.exp) || 0;
+    nextExp = Number(s.nextExp) || 10;
+    upgradeLv = Number(s.upgradeLv) || 1;
+    upgradeChance = Number(s.upgradeChance) || 90;
+    job = typeof s.job === "string" ? s.job : "초보자";
+    jobStage = Number(s.jobStage) || 0;
+    goldBonus = Number(s.goldBonus) || 1;
+    kills = Number(s.kills) || 0;
+
+    console.log("Save loaded:", s);
+  }catch(err){
+    console.warn("Failed to load save (corrupt?). Clearing save. Error:", err);
+    // 필요하면 자동으로 지우기 (사용자에게 경고 후 지우는 게 안전)
+    // localStorage.removeItem("yugisaRPG2");
+  }
 }
 
 /* ===== UI 갱신 ===== */
