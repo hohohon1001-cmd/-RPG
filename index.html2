@@ -1,0 +1,214 @@
+<script>
+/* =====================
+   기본 스탯
+===================== */
+let coins = 0;
+let atk = 1;
+
+// 강화
+let upgradeLv = 1;
+let upgradeChance = 90;
+
+// 플레이어 레벨
+let playerLv = 1;
+let exp = 0;
+let nextExp = 10;
+
+// 몬스터
+let monsterHp = 10;
+let monsterMaxHp = 10;
+let kills = 0;
+
+// 방치
+let idle = false;
+let idleTimer = null;
+
+/* =====================
+   지역 / 몬스터
+===================== */
+const areas = ["🌱 초원", "🌴 밀림", "❄ 눈", "🌋 화산", "🌌 공허"];
+
+const areaRequirements = {
+  "🌱 초원": 1,
+  "🌴 밀림": 10,
+  "❄ 눈": 20,
+  "🌋 화산": 30,
+  "🌌 공허": 40
+};
+
+const monsters = {
+  "🌱 초원": ["슬라임", "야생 토끼", "초원 벌레"],
+  "🌴 밀림": ["고블린", "독 개구리", "밀림 늑대"],
+  "❄ 눈": ["빙결수", "설원 늑대", "눈 골렘"],
+  "🌋 화산": ["화염령", "마그마 비스트", "용암 골렘"],
+  "🌌 공허": ["이름 없는 존재", "공허의 눈", "왜곡된 기사"]
+};
+
+/* =====================
+   유틸
+===================== */
+function upgradeCost() {
+  return 10 + upgradeLv * 5;
+}
+
+function getAvailableAreaIndex() {
+  let idx = 0;
+  for (let i = 0; i < areas.length; i++) {
+    if (playerLv >= areaRequirements[areas[i]]) idx = i;
+    else break;
+  }
+  return idx;
+}
+
+function areaIndex() {
+  const progress = Math.floor(kills / 6);
+  const allowed = getAvailableAreaIndex();
+  return Math.min(progress, allowed);
+}
+
+/* =====================
+   몬스터 생성
+===================== */
+function spawnMonster() {
+  const idx = areaIndex();
+  const area = areas[idx];
+  const pool = monsters[area];
+
+  monsterMaxHp = 10 + kills * 3 + idx * 20;
+  monsterHp = monsterMaxHp;
+
+  document.getElementById("monsterName").textContent =
+    pool[Math.floor(Math.random() * pool.length)];
+
+  document.getElementById("areaText").textContent = area;
+  document.getElementById("log").textContent = `${area}에 도착했다…`;
+
+  const nextIdx = idx + 1;
+  if (nextIdx < areas.length) {
+    const needLv = areaRequirements[areas[nextIdx]];
+    if (playerLv < needLv) {
+      document.getElementById("log").textContent =
+        `🔒 ${areas[nextIdx]} 진입 조건: LV ${needLv}`;
+    }
+  }
+
+  updateMonsterUI();
+}
+
+/* =====================
+   공격
+===================== */
+function attack(dmg) {
+  monsterHp -= dmg;
+  document.getElementById("hitSound").play();
+
+  if (monsterHp <= 0) {
+    kills++;
+
+    const idx = areaIndex();
+    coins += 5 + idx * 5;
+    exp += 3 + idx * 2;
+
+    levelUpCheck();
+    spawnMonster();
+  }
+
+  updateUI();
+}
+
+function manualAttack() {
+  attack(atk);
+}
+
+/* =====================
+   레벨업
+===================== */
+function levelUpCheck() {
+  while (exp >= nextExp) {
+    exp -= nextExp;
+    playerLv++;
+    nextExp = Math.floor(nextExp * 1.4);
+    atk += 1;
+
+    document.getElementById("log").textContent =
+      `🎉 레벨업! LV ${playerLv}`;
+  }
+}
+
+/* =====================
+   강화
+===================== */
+function upgrade() {
+  const cost = upgradeCost();
+
+  if (coins < cost) {
+    document.getElementById("log").textContent =
+      `💰 코인이 부족하다 (${cost})`;
+    return;
+  }
+
+  coins -= cost;
+
+  const awakened = upgradeLv >= 10;
+  const realChance = awakened
+    ? Math.min(95, upgradeChance + 10)
+    : upgradeChance;
+
+  if (Math.random() * 100 <= realChance) {
+    upgradeLv++;
+    atk += awakened ? 2 : 1;
+    upgradeChance = Math.max(10, upgradeChance - (awakened ? 1 : 2));
+
+    document.getElementById("upgradeSound").play();
+    document.getElementById("log").textContent =
+      awakened ? `🔥 각성 성공! 강화 ${upgradeLv}` : `강화 성공!`;
+  } else {
+    document.getElementById("log").textContent =
+      awakened ? `💀 각성 실패…` : `강화 실패…`;
+  }
+
+  updateUI();
+}
+
+/* =====================
+   방치
+===================== */
+function toggleIdle() {
+  idle = !idle;
+  document.getElementById("idleState").textContent = idle ? "ON" : "OFF";
+
+  if (idle) {
+    idleTimer = setInterval(() => attack(atk), 1000);
+  } else {
+    clearInterval(idleTimer);
+  }
+}
+
+/* =====================
+   UI
+===================== */
+function updateMonsterUI() {
+  document.getElementById("hpFill").style.width =
+    (monsterHp / monsterMaxHp) * 100 + "%";
+}
+
+function updateUI() {
+  document.getElementById("coin").textContent = coins;
+  document.getElementById("atk").textContent = atk;
+  document.getElementById("upgradeLv").textContent = upgradeLv;
+  document.getElementById("chanceText").textContent = upgradeChance;
+  updateMonsterUI();
+
+  const btn = document.getElementById("upgradeBtn");
+  if (btn && upgradeLv >= 10) {
+    btn.classList.add("awakened");
+    btn.textContent = "🔥 각성";
+  }
+}
+
+/* =====================
+   시작
+===================== */
+spawnMonster();
+updateUI();
+</script>
