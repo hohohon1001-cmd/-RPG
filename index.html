@@ -274,20 +274,42 @@ function jobChange(){
  updateUI();
 }
 
-/* ===== UI ===== */
-function updateUI(){
- hpFill.style.width=(monsterHp/monsterMaxHp*100)+"%";
- playerLv.textContent=playerLv;
- expText.textContent=`${exp}/${nextExp}`;
- atk.textContent=atk;
- coin.textContent=coins;
- upgradeLv.textContent=upgradeLv;
- upgradeCost.textContent=20+upgradeLv*6;
- jobText.textContent=job;
+/* ===== UI 요소 가져오기 ===== */
+const playerLvSpan = document.getElementById("playerLv");
+const atkSpan = document.getElementById("atk");
+const upgradeLvSpan = document.getElementById("upgradeLv");
+const coinSpan = document.getElementById("coin");
+const expTextSpan = document.getElementById("expText");
+const jobTextSpan = document.getElementById("jobText");
+const upgradeCostSpan = document.getElementById("upgradeCost");
+const hpFill = document.getElementById("hpFill");
+const monsterName = document.getElementById("monsterName");
+const areaText = document.getElementById("areaText");
+const log = document.getElementById("log");
+const upgradeBtn = document.getElementById("upgradeBtn");
+const jobBtn = document.getElementById("jobBtn");
 
  const btn=upgradeBtn;
  if(upgradeLv>=10) btn.classList.add("awaken");
 
+ function updateUI(){
+    // 몬스터 HP 바
+    hpFill.style.width = (monsterHp / monsterMaxHp * 100) + "%";
+
+    // 플레이어 정보
+    playerLvSpan.textContent = playerLv;
+    expTextSpan.textContent = `${exp}/${nextExp}`;
+    atkSpan.textContent = atk;
+    coinSpan.textContent = coins;
+    upgradeLvSpan.textContent = upgradeLv;
+    upgradeCostSpan.textContent = 20 + upgradeLv*6;
+    jobTextSpan.textContent = job;
+
+    // 강화 10렙 이상일 때 버튼 스타일
+    if(upgradeLv >= 10) upgradeBtn.classList.add("awaken");
+
+    save();
+ }
  save();
 }
 
