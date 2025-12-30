@@ -46,17 +46,11 @@ border-radius:30px;padding:18px;box-shadow:0 0 60px rgba(0,0,0,.95);}
 <button id="upgradeBtn" class="btn" onclick="upgrade()">🔧 강화 (<span id="upgradeCost">20</span>💰)</button>
 <button id="jobBtn" class="btn job" onclick="jobChange()" style="display:none;">🔮 전직</button>
 <button id="autoBtn" class="btn auto" onclick="toggleAuto()">🤖 자동사냥 OFF</button>
+<button class="btn" onclick="checkAttendance()">📅 출석체크</button>
 
 <div id="log" class="log">게임 시작! 화면 클릭 후 사운드 활성화</div>
 
- 
-<script>
-function enableSound() {
-    // 사운드 초기화
-}
-document.body.addEventListener("click", enableSound, { once: true });
-</script>
- <audio id="hitSound" src="https://assets.mixkit.co/sfx/preview/mixkit-quick-hit-2187.mp3"></audio>
+<audio id="hitSound" src="https://assets.mixkit.co/sfx/preview/mixkit-quick-hit-2187.mp3"></audio>
 <audio id="killSound" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3"></audio>
 <audio id="upgradeSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
 <audio id="failSound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3"></audio>
@@ -65,9 +59,9 @@ document.body.addEventListener("click", enableSound, { once: true });
 
 <script>
 /* ===== 변수 ===== */
-let coins=0, atk=1, playerLv=1, exp=0, nextExp=10;
+let coins=0, atk=1, playerLv=1, exp=0, nextExp=5;
 let upgradeLv=1, upgradeChance=90;
-let job="초보자", jobStage=0, goldBonus=1;
+let job="멜로우급", jobStage=0, goldBonus=1;
 let monsterHp=10, monsterMaxHp=10, kills=0;
 let autoHunt=false, autoInterval=null;
 let soundEnabled=false;
@@ -86,7 +80,7 @@ const monsters=[
  ["자칼님","흑화한 멜님","보스: 유기사ok"]
 ];
 
-/* ===== UI ===== */
+/* ===== UI 요소 ===== */
 const playerLvSpan = document.getElementById("playerLv");
 const atkSpan = document.getElementById("atk");
 const upgradeLvSpan = document.getElementById("upgradeLv");
@@ -109,7 +103,7 @@ const failSound = document.getElementById("failSound");
 const levelSound = document.getElementById("levelSound");
 const bossSound = document.getElementById("bossSound");
 
-/* ===== 브라우저 정책 대비 사운드 초기화 ===== */
+/* ===== 사운드 초기화 ===== */
 document.body.addEventListener("click", ()=>{
   [hitSound, killSound, upgradeSound, failSound, levelSound, bossSound].forEach(s=>{
     s.play().catch(()=>{});
@@ -123,104 +117,80 @@ document.body.addEventListener("click", ()=>{
 /* ===== 저장 ===== */
 function save(){
   try{
-    const data = {
-      coins: Number(coins) || 0,
-      atk: Number(atk) || 1,
-      playerLv: Number(playerLv) || 1,
-      exp: Number(exp) || 0,
-      nextExp: Number(nextExp) || 10,
-      upgradeLv: Number(upgradeLv) || 1,
-      upgradeChance: Number(upgradeChance) || 90,
-      job: job || "초보자",
-      jobStage: Number(jobStage) || 0,
-      goldBonus: Number(goldBonus) || 1,
-      kills: Number(kills) || 0
-    };
+    const data = { coins, atk, playerLv, exp, nextExp, upgradeLv, upgradeChance, job, jobStage, goldBonus, kills };
     localStorage.setItem("yugisaRPG2", JSON.stringify(data));
-    // 선택: 마지막 저장 시간 기록
-    localStorage.setItem("yugisaRPG2_time", String(Date.now()));
-  }catch(e){
-    console.error("Save failed:", e);
-  }
+  }catch(e){ console.error("Save failed:", e);}
 }
 
 /* ===== 불러오기 ===== */
 function load(){
   const raw = localStorage.getItem("yugisaRPG2");
-  if(!raw) return; // 저장 없음 -> 기본값 유지
+  if(!raw) return;
   try{
     const s = JSON.parse(raw);
-    // 타입검사 및 안전 할당 (let 변수에 직접 할당!)
-    if(typeof s !== "object" || s === null) throw new Error("Bad save data");
-    coins = Number(s.coins) || 0;
-    atk = Number(s.atk) || 1;
-    playerLv = Number(s.playerLv) || 1;
-    exp = Number(s.exp) || 0;
-    nextExp = Number(s.nextExp) || 10;
-    upgradeLv = Number(s.upgradeLv) || 1;
-    upgradeChance = Number(s.upgradeChance) || 90;
-    job = typeof s.job === "string" ? s.job : "초보자";
-    jobStage = Number(s.jobStage) || 0;
-    goldBonus = Number(s.goldBonus) || 1;
-    kills = Number(s.kills) || 0;
-
-    console.log("Save loaded:", s);
-  }catch(err){
-    console.warn("Failed to load save (corrupt?). Clearing save. Error:", err);
-    // 필요하면 자동으로 지우기 (사용자에게 경고 후 지우는 게 안전)
-    // localStorage.removeItem("yugisaRPG2");
-  }
+    coins = Number(s.coins)||0;
+    atk = Number(s.atk)||1;
+    playerLv = Number(s.playerLv)||1;
+    exp = Number(s.exp)||0;
+    nextExp = Number(s.nextExp)||5;
+    upgradeLv = Number(s.upgradeLv)||1;
+    upgradeChance = Number(s.upgradeChance)||90;
+    job = s.job||"멜로우급";
+    jobStage = Number(s.jobStage)||0;
+    goldBonus = Number(s.goldBonus)||1;
+    kills = Number(s.kills)||0;
+  }catch(e){ console.warn("Load failed:", e);}
 }
 
 /* ===== UI 갱신 ===== */
 function updateUI(){
- hpFillElem.style.width = (monsterHp/monsterMaxHp*100)+"%";
- playerLvSpan.textContent = playerLv;
- expTextSpan.textContent = `${exp}/${nextExp}`;
- atkSpan.textContent = atk;
- coinSpan.textContent = coins;
- upgradeLvSpan.textContent = upgradeLv;
- upgradeCostSpan.textContent = 20 + upgradeLv*6;
- jobTextSpan.textContent = job;
- if(upgradeLv>=10) upgradeBtnElem.classList.add("awaken");
- save();
- checkJob();
+  hpFillElem.style.width = (monsterHp/monsterMaxHp*100)+"%";
+  playerLvSpan.textContent = playerLv;
+  expTextSpan.textContent = `${exp}/${nextExp}`;
+  atkSpan.textContent = atk;
+  coinSpan.textContent = coins;
+  upgradeLvSpan.textContent = upgradeLv;
+  upgradeCostSpan.textContent = 20+upgradeLv*6;
+  jobTextSpan.textContent = job;
+  if(upgradeLv>=10) upgradeBtnElem.classList.add("awaken");
+  save();
+  checkJob();
 }
 
 /* ===== 지역 인덱스 ===== */
 function areaIndex(){
- let i=0;
- for(let a=0;a<areas.length;a++) if(playerLv>=areas[a].lv) i=a;
- return i;
+  let i=0;
+  for(let a=0;a<areas.length;a++) if(playerLv>=areas[a].lv) i=a;
+  return i;
 }
 
 /* ===== 몬스터 생성 ===== */
 function spawnMonster(){
- const a=areaIndex();
- monsterMaxHp = 30 + a*40 + kills*2;
- monsterHp = monsterMaxHp;
- monsterNameElem.textContent = monsters[a][Math.floor(Math.random()*monsters[a].length)];
- areaTextElem.textContent = areas[a].name;
- if(a===5 && monsterNameElem.textContent.includes("보스") && soundEnabled){
-   bossSound.currentTime=0; bossSound.play().catch(()=>{});
- }
- updateUI();
+  const a=areaIndex();
+  monsterMaxHp = 30 + a*40 + kills*2;
+  monsterHp = monsterMaxHp;
+  monsterNameElem.textContent = monsters[a][Math.floor(Math.random()*monsters[a].length)];
+  areaTextElem.textContent = areas[a].name;
+  if(a===5 && monsterNameElem.textContent.includes("보스") && soundEnabled){
+    bossSound.currentTime=0; bossSound.play().catch(()=>{});
+  }
+  updateUI();
 }
 
 /* ===== 전투 ===== */
 function attack(){
- monsterHp -= atk;
- if(soundEnabled){ hitSound.currentTime=0; hitSound.play().catch(()=>{});}
- if(monsterHp<=0){
-   if(soundEnabled){ killSound.currentTime=0; killSound.play().catch(()=>{});}
-   kills++;
-   coins += Math.random()<0.05?100:Math.floor((10+areaIndex()*6)*goldBonus);
-   if(Math.random()<0.05) logElem.textContent="🌈 무지개 골드!";
-   exp += Math.floor((8+areaIndex()*6)*(1+upgradeLv*0.1+goldBonus));
-   levelUp();
-   spawnMonster();
- }
- updateUI();
+  monsterHp -= atk;
+  if(soundEnabled){ hitSound.currentTime=0; hitSound.play().catch(()=>{});}
+  if(monsterHp<=0){
+    if(soundEnabled){ killSound.currentTime=0; killSound.play().catch(()=>{});}
+    kills++;
+    coins += Math.random()<0.05?100:Math.floor((10+areaIndex()*6)*goldBonus);
+    if(Math.random()<0.05) logElem.textContent="🌈 무지개 골드!";
+    exp += Math.floor((8+areaIndex()*6)*(1+upgradeLv*0.1+goldBonus));
+    levelUp();
+    spawnMonster();
+  }
+  updateUI();
 }
 
 /* ===== 레벨업 ===== */
@@ -228,86 +198,77 @@ function levelUp(){
     while(exp >= nextExp){
         exp -= nextExp;
         playerLv++;
-        atk++; // 공격력 증가
-        levelSound.currentTime = 0;
-        levelSound.play().catch(()=>{});
-        log.textContent = `🎉 레벨업! LV ${playerLv}`;
-
-        // 레벨업 필요 EXP 낮추기 적용
-        // 기존: nextExp = Math.floor(nextExp * 1.5);
-        // 변경: 초기값 낮추고 성장률 완화
-        nextExp = Math.floor(nextExp * 1.3); // 1.5 → 1.3
+        atk++;
+        if(soundEnabled){ levelSound.currentTime=0; levelSound.play().catch(()=>{});}
+        logElem.textContent = `🎉 레벨업! LV ${playerLv}`;
+        nextExp = Math.floor(nextExp*1.3);
     }
-    checkJob(); // 전직 가능 여부 확인
+    checkJob();
 }
 
 /* ===== 강화 ===== */
 function upgrade(){
- const cost = 20 + upgradeLv*6;
- if(coins<cost){ logElem.textContent="💸 골드 부족!"; if(soundEnabled){failSound.currentTime=0; failSound.play().catch(()=>{});} return;}
- coins -= cost;
- let chance = upgradeLv>=10?95:upgradeChance;
- if(Math.random()*100<=chance){
-   upgradeLv++;
-   atk += upgradeLv>=10?2:1;
-   upgradeChance = Math.max(10, upgradeChance-2);
-   if(soundEnabled){ upgradeSound.currentTime=0; upgradeSound.play().catch(()=>{});}
-   logElem.textContent = "✨ 강화 성공!";
- }else{
-   if(soundEnabled){ failSound.currentTime=0; failSound.play().catch(()=>{});}
-   logElem.textContent="💥 강화 실패…";
- }
- updateUI();
+  const cost = 20+upgradeLv*6;
+  if(coins<cost){ logElem.textContent="💸 골드 부족!"; if(soundEnabled){ failSound.currentTime=0; failSound.play().catch(()=>{});} return; }
+  coins -= cost;
+  let chance = upgradeLv>=10?95:upgradeChance;
+  if(Math.random()*100<=chance){
+    upgradeLv++;
+    atk += upgradeLv>=10?2:1;
+    upgradeChance=Math.max(10, upgradeChance-2);
+    if(soundEnabled){ upgradeSound.currentTime=0; upgradeSound.play().catch(()=>{});}
+    logElem.textContent="✨ 강화 성공!";
+  } else {
+    if(soundEnabled){ failSound.currentTime=0; failSound.play().catch(()=>{});}
+    logElem.textContent="💥 강화 실패…";
+  }
+  updateUI();
 }
 
 /* ===== 전직 ===== */
 function checkJob(){
- if(playerLv>=20 && jobStage===0) jobBtnElem.style.display="block";
- if(playerLv>=40 && jobStage===1) jobBtnElem.style.display="block";
- if(playerLv>=60 && jobStage===2) jobBtnElem.style.display="block";
+  if(playerLv>=20 && jobStage===0) jobBtnElem.style.display="block";
+  if(playerLv>=40 && jobStage===1) jobBtnElem.style.display="block";
+  if(playerLv>=60 && jobStage===2) jobBtnElem.style.display="block";
 }
 function jobChange(){
- if(jobStage===0){ job="⚔ 우유참치"; atk+=5; jobStage=1;}
- else if(jobStage===1){ job="🔥 준브레드엉덩이"; atk+=10; goldBonus+=0.3; jobStage=2;}
- else if(jobStage===2){ job="🌌 유기사"; atk+=20; goldBonus+=0.7; jobStage=3;}
- jobBtnElem.style.display="none";
- logElem.textContent = `🌟 전직 완료! ${job}`;
- updateUI();
+  if(jobStage===0){ job="⚔ 우유참치"; atk+=5; jobStage=1;}
+  else if(jobStage===1){ job="🔥 준브레드엉덩이"; atk+=10; goldBonus+=0.3; jobStage=2;}
+  else if(jobStage===2){ job="🌌 유기사"; atk+=20; goldBonus+=0.7; jobStage=3;}
+  jobBtnElem.style.display="none";
+  logElem.textContent = `🌟 전직 완료! ${job}`;
+  updateUI();
 }
 
 /* ===== 자동사냥 ===== */
 function toggleAuto(){
- autoHunt = !autoHunt;
- if(autoHunt){
-   autoBtnElem.textContent="🤖 자동사냥 ON";
-   autoInterval = setInterval(attack,200);
- } else {
-   autoBtnElem.textContent="🤖 자동사냥 OFF";
-   clearInterval(autoInterval);
- }
-}
-// 출석체크
-<button class="btn" onclick="checkAttendance()">📅 출석체크</button>
- function checkAttendance() {
-    const today = new Date().toISOString().slice(0,10); // YYYY-MM-DD
-    const lastVisit = localStorage.getItem("lastAttendance");
-
-    if(lastVisit !== today){
-        // 오늘 처음 접속 -> 보상 지급
-        coins += 50; // 예: 50코인 지급
-        log.textContent = "🎁 오늘 출석 보상 50💰 지급!";
-        localStorage.setItem("lastAttendance", today);
-        updateUI();
-    } else {
-        // 이미 출석 완료
-        log.textContent = "✅ 오늘 출석 완료!";
-    }
+  autoHunt = !autoHunt;
+  if(autoHunt){
+    autoBtnElem.textContent="🤖 자동사냥 ON";
+    autoInterval = setInterval(attack,200);
+  } else {
+    autoBtnElem.textContent="🤖 자동사냥 OFF";
+    clearInterval(autoInterval);
+  }
 }
 
-// 게임 시작 시 호출
-checkAttendance();
+/* ===== 출석체크 ===== */
+function checkAttendance(){
+  const today = new Date().toISOString().slice(0,10);
+  const lastVisit = localStorage.getItem("lastAttendance");
+  if(lastVisit !== today){
+    coins += 50;
+    logElem.textContent="🎁 오늘 출석 보상 50💰 지급!";
+    localStorage.setItem("lastAttendance", today);
+    updateUI();
+  } else {
+    logElem.textContent="✅ 오늘 출석 완료!";
+  }
+}
+
 /* ===== 시작 ===== */
 load();
+checkAttendance();
 spawnMonster();
 updateUI();
 </script>
