@@ -2,113 +2,90 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<title>유기사 RPG</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>유기사 RPG – Ultimate</title>
 
 <style>
-:root{
-  --main:#7c8cff;
-  --sub:#ff9b9b;
-  --glass:rgba(255,255,255,.06);
-}
-
-*{box-sizing:border-box}
-html,body{
-  margin:0;height:100%;
-  font-family: 'Segoe UI', system-ui;
-  color:#e6e8ff;
-}
-
 body{
+  margin:0;
+  font-family:system-ui;
   background:
-    linear-gradient(180deg,rgba(0,0,0,.7),rgba(0,0,0,.9)),
-    url("https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1920&q=80");
+    linear-gradient(rgba(0,0,0,.7),rgba(0,0,0,.9)),
+    url("https://images.unsplash.com/photo-1511497584788-876760111969?auto=format&fit=crop&w=1920&q=80");
   background-size:cover;
-  background-position:center;
-  display:flex;
-  justify-content:center;
-  align-items:center;
+  color:#e8ebff;
 }
 
-.app{
-  width:100%;
-  max-width:1100px;
-  background:rgba(10,15,30,.8);
-  backdrop-filter:blur(8px);
-  border-radius:20px;
-  padding:16px;
+.container{
+  max-width:1200px;
+  margin:auto;
+  padding:12px;
   display:grid;
   grid-template-columns:420px 1fr;
-  gap:16px;
+  gap:12px;
 }
 
-/* HUD */
-.hud{
+.panel{
+  background:rgba(255,255,255,.06);
+  backdrop-filter:blur(8px);
+  border-radius:16px;
+  padding:12px;
+}
+
+h2,h3{margin:6px 0}
+
+.stat-grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:8px;
+  gap:6px;
 }
-.hud-box{
-  background:var(--glass);
-  border-radius:12px;
-  padding:8px;
-  text-align:center;
-}
-.hud-box small{opacity:.7}
-.hud-box span{font-size:18px;font-weight:800;color:var(--main)}
 
-/* Monster */
-.monster{
-  background:var(--glass);
-  border-radius:16px;
-  padding:14px;
+.stat{
+  background:rgba(255,255,255,.08);
+  border-radius:10px;
+  padding:6px;
   text-align:center;
 }
-.hpbar,.mpbar{
+
+.bar{
   height:10px;
   background:#111;
   border-radius:8px;
   overflow:hidden;
 }
-.hpfill{height:100%;background:linear-gradient(90deg,#ff3b3b,#ff9b9b)}
-.mpfill{height:100%;background:linear-gradient(90deg,#6befff,#4db6ff)}
+.hp{background:linear-gradient(90deg,#ff4d4d,#ff9b9b);height:100%}
+.mp{background:linear-gradient(90deg,#4db6ff,#6befff);height:100%}
 
-.btn{
+button{
+  width:100%;
+  margin-top:6px;
   padding:10px;
   border:none;
-  border-radius:12px;
+  border-radius:10px;
   font-weight:800;
   cursor:pointer;
-  background:linear-gradient(90deg,var(--main),#5865f2);
+  background:linear-gradient(90deg,#7c8cff,#5865f2);
   color:white;
 }
-.btn.warn{background:linear-gradient(90deg,#ff7b7b,#ffb86b)}
-.btn.green{background:linear-gradient(90deg,#00ffa6,#00c97a)}
+button.red{background:linear-gradient(90deg,#ff6b6b,#ff9b6b)}
+button.green{background:linear-gradient(90deg,#00ffa6,#00c97a)}
 
-.card{
-  background:var(--glass);
-  border-radius:14px;
-  padding:12px;
-}
-
-/* Map */
-.map-grid{
+.map{
   display:grid;
   grid-template-columns:repeat(3,1fr);
-  gap:8px;
+  gap:6px;
 }
-.map-node{
-  padding:10px;
-  border-radius:12px;
-  background:rgba(255,255,255,.04);
+
+.map div{
+  padding:8px;
+  background:rgba(255,255,255,.08);
+  border-radius:10px;
   cursor:pointer;
   text-align:center;
 }
-.map-node.lock{opacity:.4;cursor:not-allowed}
 
-/* Log */
 .log{
-  height:100px;
+  height:120px;
   overflow:auto;
   font-size:13px;
 }
@@ -116,92 +93,134 @@ body{
 </head>
 
 <body>
-<div class="app">
+<div class="container">
 
 <!-- LEFT -->
-<div>
-  <div class="hud">
-    <div class="hud-box"><small>LV</small><span id="lv">1</span></div>
-    <div class="hud-box"><small>직업</small><span id="job">멜로우급</span></div>
-    <div class="hud-box"><small>ATK</small><span id="atk">1</span></div>
-    <div class="hud-box"><small>강화</small><span id="up">1</span></div>
-    <div class="hud-box"><small>💰</small><span id="gold">0</span></div>
-    <div class="hud-box"><small>EXP</small><span id="exp">0/5</span></div>
+<div class="panel">
+  <h2>플레이어</h2>
+  <div class="stat-grid">
+    <div class="stat">LV<br><b id="lv"></b></div>
+    <div class="stat">ATK<br><b id="atk"></b></div>
+    <div class="stat">강화<br><b id="up"></b></div>
+    <div class="stat">💰<br><b id="gold"></b></div>
+    <div class="stat">EXP<br><b id="exp"></b></div>
+    <div class="stat">직업<br><b id="job"></b></div>
   </div>
 
-  <div class="monster" style="margin-top:12px">
-    <h2 id="mName">멜님</h2>
-    <div class="hpbar"><div id="hp" class="hpfill"></div></div>
-    <div class="mpbar" style="margin-top:6px"><div id="mp" class="mpfill"></div></div>
+  <h3>몬스터</h3>
+  <div id="monsterName"></div>
+  <div class="bar"><div id="hpBar" class="hp"></div></div>
+  <div class="bar" style="margin-top:4px"><div id="mpBar" class="mp"></div></div>
 
-    <button class="btn" onclick="attack()" style="margin-top:10px">공격</button>
-    <button class="btn green" onclick="toggleAuto()">자동사냥</button>
-    <button class="btn warn" onclick="upgrade()">강화</button>
-  </div>
+  <button onclick="attack()">공격</button>
+  <button class="green" onclick="toggleAuto()">자동사냥</button>
+  <button class="red" onclick="upgrade()">강화</button>
 </div>
 
 <!-- RIGHT -->
-<div class="card">
+<div class="panel">
   <h3>지도</h3>
-  <div class="map-grid" id="map"></div>
+  <div class="map" id="map"></div>
 
-  <h3 style="margin-top:12px">로그</h3>
+  <h3>상점</h3>
+  <button onclick="buyAtk()">⚔ 공격력 +1 (50G)</button>
+  <button onclick="buyMp()">🔮 최대 마나 +10 (40G)</button>
+
+  <h3>로그</h3>
   <div class="log" id="log"></div>
 </div>
 
 </div>
 
 <script>
-/* === 데이터 === */
-let lv=1, atk=1, gold=0, exp=0, nextExp=5;
-let up=1, mp=100, maxMp=100;
-let auto=false, autoId=null;
-let area=0, hp=20, maxHp=20;
+/* ===== 상태 ===== */
+let lv=1, atk=1, up=1, gold=0, exp=0, nextExp=5;
+let maxHp=20, hp=20;
+let maxMp=50, mp=50;
+let auto=false, autoTimer=null;
+let area=0;
 
+/* ===== 데이터 ===== */
 const areas=[
- "🌱 잼못타","🌴 급못타","❄ 유기사의 차가운 농담",
- "🏜 식탁","🌋 팀 나빠","🌌 유기사 디스코드"
+ "잼못타","급못타","유기사의 차가운 농담",
+ "식탁","팀 나빠","유기사 디스코드"
 ];
 
 const monsters=[
  ["어려워 하시는 멜님","벨키님"],
  ["또 못깨고 있는 멜님","먼저깬 우참님"],
- ["왕이 넘어지면? 킹콩 ㅋㅋㅋ","아니 실수로 라이벌 들어감"],
- ["옷에 떨어진 밥풀","후식으론 준브레드 엉덩이"],
+ ["왕이 넘어지면? 킹콩 ㅋㅋㅋ","라이벌 실수입장"],
+ ["옷에 떨어진 밥풀","준브레드 엉덩이"],
  ["짭 유기사","멜님으로 위장한 준브레드"],
- ["자칼님","흑화한 멜님","보스: 유기사ok"]
+ ["자칼님","흑화한 멜님","보스 유기사ok"]
 ];
 
-/* === 기능 === */
+/* ===== DOM ===== */
+const lvEl=lvEl=document.getElementById("lv");
+const atkEl=document.getElementById("atk");
+const upEl=document.getElementById("up");
+const goldEl=document.getElementById("gold");
+const expEl=document.getElementById("exp");
+const jobEl=document.getElementById("job");
+const hpBar=document.getElementById("hpBar");
+const mpBar=document.getElementById("mpBar");
+const mName=document.getElementById("monsterName");
+const logBox=document.getElementById("log");
+
+/* ===== 함수 ===== */
 function log(t){
   const d=document.createElement("div");
   d.textContent=t;
   logBox.prepend(d);
 }
 
+function update(){
+  lvEl.textContent=lv;
+  atkEl.textContent=atk;
+  upEl.textContent=up;
+  goldEl.textContent=gold;
+  expEl.textContent=`${exp}/${nextExp}`;
+  jobEl.textContent="멜로우급";
+  hpBar.style.width=(hp/maxHp*100)+"%";
+  mpBar.style.width=(mp/maxMp*100)+"%";
+}
+
 function spawn(){
-  maxHp=20+area*40;
+  maxHp=20+area*30;
   hp=maxHp;
   mName.textContent=monsters[area][Math.floor(Math.random()*monsters[area].length)];
-  update();
 }
 
 function attack(){
   hp-=atk;
   if(hp<=0){
     gold+=10+area*5;
-    exp+=5+area*2;
+    exp+=4+area*2;
     if(exp>=nextExp){
-      exp-=nextExp; lv++; atk++; nextExp=Math.floor(nextExp*1.3);
-      log("🎉 레벨업!");
+      exp-=nextExp;
+      lv++;
+      nextExp=Math.floor(nextExp*1.25);
+      atk++;
+      log("레벨업!");
     }
     spawn();
   }
   update();
 }
 
+function toggleAuto(){
+  auto=!auto;
+  if(auto){
+    autoTimer=setInterval(attack,400);
+    log("자동사냥 ON");
+  }else{
+    clearInterval(autoTimer);
+    log("자동사냥 OFF");
+  }
+}
+
 function upgrade(){
-  const cost=20+up*6;
+  const cost=20+up*10;
   if(gold<cost){log("골드 부족");return;}
   gold-=cost;
   if(Math.random()<0.8){
@@ -211,31 +230,19 @@ function upgrade(){
   update();
 }
 
-function toggleAuto(){
-  auto=!auto;
-  if(auto){
-    autoId=setInterval(attack,300);
-    log("자동사냥 ON");
-  }else{
-    clearInterval(autoId);
-    log("자동사냥 OFF");
-  }
+function buyAtk(){
+  if(gold<50){log("골드 부족");return;}
+  gold-=50; atk++; update(); log("공격력 +1");
+}
+function buyMp(){
+  if(gold<40){log("골드 부족");return;}
+  gold-=40; maxMp+=10; mp=maxMp; update(); log("마나 증가");
 }
 
-function update(){
-  lvEl.textContent=lv;
-  atkEl.textContent=atk;
-  goldEl.textContent=gold;
-  upEl.textContent=up;
-  expEl.textContent=`${exp}/${nextExp}`;
-  hpEl.style.width=(hp/maxHp*100)+"%";
-  mpEl.style.width=(mp/maxMp*100)+"%";
-}
-
-/* === 지도 === */
+/* ===== 지도 ===== */
+const map=document.getElementById("map");
 areas.forEach((a,i)=>{
   const d=document.createElement("div");
-  d.className="map-node";
   d.textContent=a;
   d.onclick=()=>{
     if(lv<i*10){log("레벨 부족");return;}
@@ -244,9 +251,9 @@ areas.forEach((a,i)=>{
   map.appendChild(d);
 });
 
-/* === 시작 === */
-const lvEl=lv, atkEl=atk;
-spawn(); update();
+/* ===== 시작 ===== */
+spawn();
+update();
 </script>
 </body>
 </html>
