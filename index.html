@@ -233,7 +233,58 @@ const monsters=[
   ["짭 유기사","멜님으로 위장한 준브레드"],
   ["자칼님","흑화한 멜님","보스: 유기사ok"]
 ];
+/* ===== 모바일 ===== */
+@media (max-width: 768px){
+  .container{
+    transform: scale(0.85);
+    transform-origin: top center;
+  }
 
+  .hud{
+    grid-template-columns: repeat(3, 1fr);
+    gap:6px;
+  }
+
+  .hud-box{
+    font-size:10px;
+    padding:4px 0;
+    border-radius:14px;
+  }
+
+  .hud-box span{
+    font-size:13px;
+  }
+
+  .btn{
+    padding:10px;
+    font-size:13px;
+    border-radius:16px;
+  }
+
+  .monster{
+    padding:20px 12px;
+  }
+
+  .monster-name{
+    font-size:18px;
+  }
+
+  .log{
+    font-size:12px;
+  }
+  }
+  /* ===== 기본 (PC) ===== */
+.container{
+  width:95%;
+  max-width:540px;
+  background:linear-gradient(180deg,#1a1d2b,#0b0d15);
+  border-radius:30px;
+  padding:18px;
+  box-shadow:0 0 60px rgba(0,0,0,.95);
+
+  transform: scale(1);
+  transform-origin: top center;
+}
 /* shop + artifacts pool */
 const shopItems=[
   {id:'atk_boost',label:'공격의 보석',desc:'ATK +1',price:150,onBuy:()=>{atk+=1;appendLog("🗡 공격력 +1 획득");}},
@@ -296,7 +347,46 @@ document.body.addEventListener("click", ()=>{
   [hitSound,killSound,upgradeSound,failSound,levelSound,bossSound].forEach(s=>{s.volume=0.9;s.play().catch(()=>{});s.pause();s.currentTime=0;});
   soundEnabled=true; appendLog("🔊 사운드 활성화");
 },{once:true});
+/* ===== 모바일 ===== */
+@media (max-width: 768px){
+  .container{
+    transform: scale(0.85);
+    transform-origin: top center;
+  }
 
+  .hud{
+    grid-template-columns: repeat(3, 1fr);
+    gap:6px;
+  }
+
+  .hud-box{
+    font-size:10px;
+    padding:4px 0;
+    border-radius:14px;
+  }
+
+  .hud-box span{
+    font-size:13px;
+  }
+
+  .btn{
+    padding:10px;
+    font-size:13px;
+    border-radius:16px;
+  }
+
+  .monster{
+    padding:20px 12px;
+  }
+
+  .monster-name{
+    font-size:18px;
+  }
+
+  .log{
+    font-size:12px;
+  }
+  }
 /* 저장/불러오기 */
 function save(){
   try{
