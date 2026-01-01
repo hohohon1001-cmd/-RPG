@@ -1,538 +1,299 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>유기사 RPG — 통합판 (랭킹 포함)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>유기사 RPG</title>
+
 <style>
-:root{--accent:#7c8cff;--accent2:#ff9b9b;--glass:rgba(255,255,255,0.04)}
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:Inter, "Segoe UI", Roboto, system-ui;color:#e6e8ff}
+
 body{
-  background: linear-gradient(180deg, rgba(3,6,15,0.6), rgba(0,0,0,0.85)),
-    url('https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=1920&q=80');
-  background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;padding:20px;
+ margin:0;
+ min-height:100vh;
+ font-family:'Segoe UI',sans-serif;
+ background:#000;
+ display:flex;
+ justify-content:center;
+ align-items:flex-start;
+ padding-top:20px;
+ overflow-x:hidden;
 }
-.app{width:100%;max-width:1180px;border-radius:16px;overflow:hidden;background:linear-gradient(180deg, rgba(2,6,23,0.55), rgba(1,3,10,0.7));box-shadow:0 20px 60px rgba(0,0,0,0.7);display:grid;grid-template-columns:380px 1fr;gap:16px;padding:16px;}
-.card{background:var(--glass);border-radius:12px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,0.5)}
-.hud{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px}
-.hud-box{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));padding:8px;border-radius:10px;text-align:center}
-.hud-box .label{font-size:12px;color:#bfc7ff}
-.hud-box .value{font-weight:800;font-size:18px;color:var(--accent);margin-top:4px}
 
-.monster{border-radius:14px;padding:12px;text-align:center}
-.monster .name{font-weight:900;font-size:20px;margin-bottom:6px}
-.bar{height:12px;background:#111;border-radius:8px;overflow:hidden}
-.fill{height:100%;transition:width .12s linear}
-.hp{background:linear-gradient(90deg,#ff3b3b,#ff9b9b)}
-.mp{background:linear-gradient(90deg,#6befff,#4db6ff)}
+/* ===== 배경 ===== */
+#bg{
+ position:fixed;
+ inset:0;
+ background-size:cover;
+ background-position:center;
+ filter:brightness(0.55);
+ z-index:0;
+ pointer-events:none;
+ transition:background-image .5s;
+}
 
-.row{display:flex;gap:8px;align-items:center}
-.col{display:flex;flex-direction:column;gap:8px}
+/* ===== 게임 컨테이너 ===== */
+.container{
+ position:relative;
+ z-index:10;
+ width:95%;
+ max-width:520px;
+ background:rgba(15,18,30,.9);
+ border-radius:26px;
+ padding:16px;
+ box-shadow:0 0 40px rgba(0,0,0,.9);
+}
 
-.map-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
-.map-node{flex:1 1 30%;min-width:100px;padding:10px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));text-align:center;cursor:pointer;border:1px solid rgba(255,255,255,0.03)}
-.map-node.locked{opacity:0.45;filter:grayscale(40%);cursor:not-allowed}
+/* HUD */
+.hud{
+ display:grid;
+ grid-template-columns:repeat(6,1fr);
+ gap:6px;
+}
+.hud-box{
+ background:#0e1222;
+ border-radius:14px;
+ text-align:center;
+ font-size:11px;
+ padding:6px 0;
+}
+.hud-box span{
+ display:block;
+ font-size:15px;
+ font-weight:bold;
+ color:#9fa8ff;
+}
 
-.shop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
-.shop-item{padding:8px;border-radius:10px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));text-align:center}
+/* 지역 */
+.area{
+ text-align:center;
+ margin:10px 0;
+ font-weight:bold;
+ color:#cfd4ff;
+}
 
-.skill-row{display:flex;gap:8px}
-.skill-btn{flex:1;padding:10px;border-radius:10px;background:linear-gradient(90deg,#ffd18a,#ff8b8b);color:#110;font-weight:800;cursor:pointer;position:relative;overflow:hidden}
-.cooldown{position:absolute;left:0;top:0;height:100%;background:rgba(0,0,0,0.45);width:0%;transition:width .2s linear;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+/* 몬스터 */
+.monster{
+ background:linear-gradient(180deg,#232851,#0d1020);
+ border-radius:24px;
+ padding:22px;
+ text-align:center;
+ cursor:pointer;
+ user-select:none;
+}
+.monster-name{
+ font-size:20px;
+ margin-bottom:6px;
+}
+.hp-bar{
+ width:100%;
+ height:14px;
+ background:#111;
+ border-radius:10px;
+ overflow:hidden;
+}
+.hp-fill{
+ height:100%;
+ background:linear-gradient(90deg,#ff3b3b,#ff9b9b);
+ width:100%;
+ transition:.15s;
+}
 
-.traits{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
-.trait{padding:8px;border-radius:8px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));text-align:center}
+/* 버튼 */
+.btn{
+ width:100%;
+ margin-top:6px;
+ padding:12px;
+ border-radius:18px;
+ border:none;
+ cursor:pointer;
+ font-size:14px;
+ font-weight:bold;
+ color:white;
+ background:linear-gradient(#5865F2,#404EED);
+}
+.btn.job{background:linear-gradient(90deg,#ffd700,#ff4d4d,#9b4dff)}
+.btn.auto{background:linear-gradient(90deg,#00ff9b,#00a676)}
+.btn.shop{background:linear-gradient(90deg,#ff9f1a,#ff6a00)}
+.btn.map{background:linear-gradient(90deg,#4dd0e1,#0077c2)}
 
-.artifacts{display:flex;gap:8px;margin-top:8px}
-.art-slot{padding:8px;border-radius:8px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));text-align:center;min-width:80px}
-
-.log{height:160px;overflow:auto;padding:8px;border-radius:8px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));font-size:13px}
-
-.badge{background:rgba(0,0,0,0.25);padding:6px 8px;border-radius:10px;font-weight:700;color:#fff}
-.small{font-size:12px;color:#bfc7ff}
-.btn{padding:10px;border-radius:10px;border:none;cursor:pointer;font-weight:800;background:linear-gradient(90deg,var(--accent),#5865f2);color:white}
-.btn.secondary{background:linear-gradient(90deg,#2e7bff,#00d4a5)}
-.btn.warn{background:linear-gradient(90deg,#ff7b7b,#ffb86b);color:#120f0f}
-.btn.small{padding:6px 8px;font-size:13px}
-
-.modal { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.7); z-index:999; }
-.modal-box{width:90%;max-width:520px;background:linear-gradient(180deg,#111428,#07102a);padding:14px;border-radius:12px;color:#e6e8ff}
-.rank-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:14px}
-
-@media(max-width:980px){ .app{grid-template-columns:1fr} .map-node{flex:1 1 45%} }
+.log{
+ text-align:center;
+ margin-top:6px;
+ font-size:13px;
+ color:#b7bbff;
+ min-height:18px;
+}
 </style>
 </head>
+
 <body>
-<div class="app">
 
-  <!-- LEFT BLOCK -->
-  <div class="col">
-    <div class="card hud">
-      <div class="hud-box"><div class="label">LV</div><div id="playerLv" class="value">1</div></div>
-      <div class="hud-box"><div class="label">직업</div><div id="jobText" class="value">멜로우급</div></div>
-      <div class="hud-box"><div class="label">ATK</div><div id="atk" class="value">1</div></div>
-      <div class="hud-box"><div class="label">강화</div><div id="upgradeLv" class="value">1</div></div>
-      <div class="hud-box"><div class="label">💰</div><div id="coin" class="value">0</div></div>
-      <div class="hud-box"><div class="label">EXP</div><div id="expText" class="value">0/10</div></div>
-      <div style="grid-column:span 3;margin-top:8px">
-        <div class="small">MP</div>
-        <div class="bar" style="margin-top:6px"><div id="hudMpFill" class="fill mp" style="width:100%"></div></div>
-      </div>
-    </div>
+<div id="bg"></div>
 
-    <div class="card monster">
-      <div id="areaText" style="font-weight:700;margin-bottom:6px">🌱 잼못타</div>
-      <div class="name" id="monsterName">멜님</div>
-      <div class="bar" style="margin-bottom:8px"><div id="hpFill" class="fill hp" style="width:100%"></div></div>
+<div class="container">
 
-      <div class="row" style="margin-top:8px">
-        <button id="attackBtn" class="btn">⚔ 공격</button>
-        <button id="autoBtn" class="btn secondary">🤖 자동사냥 OFF</button>
-      </div>
-
-      <button id="upgradeBtn" class="btn warn" style="margin-top:8px">🔧 강화 (<span id="upgradeCost">20</span>💰)</button>
-
-      <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
-        <div style="flex:1">
-          <div class="small">MP</div>
-          <div class="bar" style="margin-top:6px"><div id="mpFill" class="fill mp" style="width:100%"></div></div>
-        </div>
-        <div style="width:110px;text-align:right">
-          <div class="small">Level</div>
-          <div id="playerLvSmall" style="font-weight:800">1</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>지도</strong><span class="small">클릭하면 이동 (레벨 필요)</span>
-      </div>
-      <div id="mapGrid" class="map-grid"></div>
-    </div>
-
-  </div>
-
-  <!-- RIGHT BLOCK -->
-  <div class="col">
-    <div class="card" style="display:flex;justify-content:space-between;align-items:center">
-      <div>
-        <strong>상점</strong><span class="small" style="margin-left:8px">골드로 구매</span>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input id="playerName" placeholder="이름(랭킹용)" style="padding:6px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#fff" />
-        <button id="rankingOpenBtn" class="btn small">🏆 랭킹</button>
-        <div class="badge" id="timeBadge">저장됨</div>
-      </div>
-    </div>
-    <div id="shopGrid" class="card shop-grid"></div>
-
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <strong>스킬</strong><span class="small">MP · 쿨다운</span>
-      </div>
-      <div class="skill-row" style="margin-top:10px">
-        <div id="skill1Btn" class="skill-btn">POWER STRIKE<br><small class="small">MP 20 · CD 5s</small><div id="skill1Cd" class="cooldown"></div></div>
-        <div id="skill2Btn" class="skill-btn" style="background:linear-gradient(90deg,#ffd18a,#ff8b8b)">WHIRLWIND<br><small class="small">MP 40 · CD 12s</small><div id="skill2Cd" class="cooldown"></div></div>
-      </div>
-      <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
-        <button id="jobBtn" class="btn" style="display:none">🔮 전직</button>
-        <button class="btn secondary" onclick="checkAttendance()">📅 출석체크</button>
-        <div style="flex:1"></div>
-        <div id="bossBtnContainer"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center"><strong>특성 (포인트: <span id="traitPoints">0</span>)</strong><span class="small">레벨업 시 포인트</span></div>
-      <div id="traits" class="traits"></div>
-    </div>
-
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center"><strong>유물 슬롯</strong><span class="small">장착으로 보너스</span></div>
-      <div id="artifacts" class="artifacts"></div>
-    </div>
-
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center"><strong>도감</strong><span class="small">처치 수</span></div>
-      <div id="bestiary" style="margin-top:8px" class="small"></div>
-    </div>
-
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center"><strong>로그</strong></div>
-      <div id="log" class="log" style="margin-top:8px">게임 초기화 중…</div>
-    </div>
-  </div>
-
+<div class="hud">
+ <div class="hud-box">LV<span id="playerLv">1</span></div>
+ <div class="hud-box">직업<span id="jobText">초보자</span></div>
+ <div class="hud-box">ATK<span id="atk">1</span></div>
+ <div class="hud-box">강화<span id="upgradeLv">1</span></div>
+ <div class="hud-box">💰<span id="coin">0</span></div>
+ <div class="hud-box">EXP<span id="expText">0/10</span></div>
 </div>
 
-<!-- Ranking modal -->
-<div id="rankingModal" style="display:none" class="modal">
-  <div class="modal-box">
-    <h3>🏆 랭킹 TOP 10</h3>
-    <div id="rankingList" style="margin-top:8px"></div>
-    <div style="display:flex;gap:8px;margin-top:12px;justify-content:flex-end">
-      <button class="btn small" onclick="closeRanking()">닫기</button>
-    </div>
-  </div>
+<div id="areaText" class="area">🌱 잼못타</div>
+
+<div class="monster" onclick="attack()">
+ <div id="monsterName" class="monster-name">아직도 못깬 멜님</div>
+ <div class="hp-bar"><div id="hpFill" class="hp-fill"></div></div>
 </div>
 
-<!-- audio -->
-<audio id="hitSound" src="https://assets.mixkit.co/sfx/preview/mixkit-quick-hit-2187.mp3"></audio>
-<audio id="killSound" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3"></audio>
-<audio id="upgradeSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
-<audio id="failSound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3"></audio>
-<audio id="levelSound" src="https://assets.mixkit.co/sfx/preview/mixkit-magic-game-win-1949.mp3"></audio>
-<audio id="bossSound" src="https://assets.mixkit.co/sfx/preview/mixkit-dramatic-hit-166.mp3"></audio>
+<button class="btn" onclick="upgrade()">🔧 강화</button>
+<button id="jobBtn" class="btn job" onclick="jobChange()" style="display:none;">🔮 전직</button>
+<button class="btn auto" onclick="toggleAuto()">🤖 자동사냥</button>
+<button class="btn map" onclick="moveMap()">🗺️ 지도 이동</button>
+
+<div id="log" class="log">게임 시작!</div>
+
+</div>
 
 <script>
-/* ===========================
-  통합 게임 스크립트 + 랭킹
-  =========================== */
-
-/* 기본 상태 */
+/* ===== 데이터 ===== */
 let coins=0, atk=1, playerLv=1, exp=0, nextExp=10;
-let upgradeLv=1, upgradeChance=90, job="멜로우급", jobStage=0, goldBonus=1, kills=0;
-let monsterHp=10, monsterMaxHp=10;
-let mp=100, maxMp=100, mpRegen=1;
-let autoHunt=false, autoInterval=null;
-let soundEnabled=false;
-let currentArea=0;
-let traitPoints=0;
+let upgradeLv=1, job="초보자", jobStage=0;
+let monsterHp=20, monsterMaxHp=20, kills=0;
+let auto=false, autoTimer=null;
 
-let skillState={
-  1:{cd:5,last:-9999,mp:20,name:"POWER STRIKE",level:1},
-  2:{cd:12,last:-9999,mp:40,name:"WHIRLWIND",level:1}
-};
-let xpBoost={active:false,endAt:0,multiplier:1};
-let bossCooldown=1000*60*60*6, bossLast=0;
-let artifacts=[null,null,null];
-let bestiary={};
-
-/* trait defs (간단 적용 함수) */
-const traitDefs=[
-  {id:'t1',name:'공격의 본능',desc:'공격력 +5%',apply:(m)=>m.atkMult=(m.atkMult||1)*1.05},
-  {id:'t2',name:'강화 숙련',desc:'강화 성공 확률 +2%',apply:(m)=>m.upgradeChanceMod=(m.upgradeChanceMod||0)+2},
-  {id:'t3',name:'재수 좋은 골드',desc:'골드 +10%',apply:(m)=>m.goldMult=(m.goldMult||1)*1.10},
-  {id:'t4',name:'스킬 집중',desc:'MP 소모 -5%',apply:(m)=>m.mpCostMult=(m.mpCostMult||1)*0.95},
-  {id:'t5',name:'자동 효율',desc:'자동 속도 +10%',apply:(m)=>m.autoSpeed=(m.autoSpeed||1)*0.9},
-  {id:'t6',name:'경험의 부적',desc:'경험치 +10%',apply:(m)=>m.xpMult=(m.xpMult||1)*1.10}
-];
-
-/* 지역/몬스터 (원본 유지) */
+/* ===== 지역 + 배경 ===== */
 const areas=[
-  {name:"🌱 잼못타",lv:1},{name:"🌴 급못타",lv:10},{name:"❄ 유기사의 차가운 농담",lv:20},
-  {name:"🏜 식탁",lv:30},{name:"🌋 팀나빠",lv:40},{name:"🌌 유기사 디스코드",lv:50}
+ {name:"🌱 잼못타", lv:1, bg:"https://images.unsplash.com/photo-1501785888041-af3ef285b470"},
+ {name:"🌴 급못타", lv:10, bg:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee"},
+ {name:"❄ 유기사의 차가운 농담", lv:20, bg:"https://images.unsplash.com/photo-1482192596544-9eb780fc7f66"},
+ {name:"🏜 식탁", lv:30, bg:"https://images.unsplash.com/photo-1504674900247-0877df9cc836"},
+ {name:"🌋 팀 나빠", lv:40, bg:"https://images.unsplash.com/photo-1500534314209-a25ddb2bd429"},
+ {name:"🌌 유기사 디스코드", lv:50, bg:"https://images.unsplash.com/photo-1446776811953-b23d57bd21aa"}
 ];
+
 const monsters=[
-  ["어려워 하시는 멜님","벨키님"],
-  ["또 못깨고 있는 멜님","먼저깬 우참님"],
-  ["왕이 넘어지면? 킹콩 ㅋㅋㅋ","아니 실수로 라이벌 들어감"],
-  ["옷에 떨어진 밥풀","후식으론 준브레드 엉덩이"],
-  ["짭 유기사","멜님으로 위장한 준브레드"],
-  ["자칼님","흑화한 멜님","보스: 유기사ok"]
+ ["아직도 못깬 멜님","같이 올라가는 벨키님"],
+ ["이걸 또 어려워 하시는 멜님","먼저 올라간 우유참치님"],
+ ["왕이 넘어지면? 킹콩ㅋㅋㅋ","아니 실수로 라이벌들어감"],
+ ["내 옷에 떨어진 밥풀님","후식으론 준브레드엉덩이"],
+ ["팀나빠","풍성한 할로윈"],
+ ["흑화한 멜님","자칼님","보스: 유기사"]
 ];
-/* ===== 모바일 ===== */
-@media (max-width: 768px){
-  .container{
-    transform: scale(0.85);
-    transform-origin: top center;
-  }
 
-  .hud{
-    grid-template-columns: repeat(3, 1fr);
-    gap:6px;
-  }
+/* ===== UI ===== */
+const $=id=>document.getElementById(id);
 
-  .hud-box{
-    font-size:10px;
-    padding:4px 0;
-    border-radius:14px;
-  }
-
-  .hud-box span{
-    font-size:13px;
-  }
-
-  .btn{
-    padding:10px;
-    font-size:13px;
-    border-radius:16px;
-  }
-
-  .monster{
-    padding:20px 12px;
-  }
-
-  .monster-name{
-    font-size:18px;
-  }
-
-  .log{
-    font-size:12px;
-  }
-  }
-  /* ===== 기본 (PC) ===== */
-.container{
-  width:95%;
-  max-width:540px;
-  background:linear-gradient(180deg,#1a1d2b,#0b0d15);
-  border-radius:30px;
-  padding:18px;
-  box-shadow:0 0 60px rgba(0,0,0,.95);
-
-  transform: scale(1);
-  transform-origin: top center;
+function areaIndex(){
+ let i=0;
+ for(let a=0;a<areas.length;a++) if(playerLv>=areas[a].lv) i=a;
+ return i;
 }
-/* shop + artifacts pool */
-const shopItems=[
-  {id:'atk_boost',label:'공격의 보석',desc:'ATK +1',price:150,onBuy:()=>{atk+=1;appendLog("🗡 공격력 +1 획득");}},
-  {id:'mana_pot',label:'마나 물약',desc:'MP +50',price:40,onBuy:()=>{mp=Math.min(maxMp,mp+50);appendLog("🍷 마나 +50");}},
-  {id:'cool_reduce',label:'스킬 연마서',desc:'스킬 CD -1s',price:120,onBuy:()=>{Object.values(skillState).forEach(s=>s.cd=Math.max(1,s.cd-1));appendLog("📚 스킬 쿨감");}},
-  {id:'xp_boost',label:'XP 부스터(30s)',desc:'경험치 2배 30s',price:100,onBuy:()=>{xpBoost.active=true;xpBoost.multiplier=2;xpBoost.endAt=Date.now()+30000;appendLog("✨ XP 2배 (30s)");}}
-];
-const artifactPool=[
-  {id:'a1',name:'경험의 반지',desc:'EXP +15%',apply:(m)=>m.xpMult=(m.xpMult||1)*1.15},
-  {id:'a2',name:'마나석',desc:'MP 회복 +1/s',apply:(m)=>m.mpRegenAdd=(m.mpRegenAdd||0)+1},
-  {id:'a3',name:'금화 파우치',desc:'골드 +20%',apply:(m)=>m.goldMult=(m.goldMult||1)*1.2}
-];
 
-/* DOM 캐시 */
-const playerLvSpan=document.getElementById("playerLv");
-const playerLvSmall=document.getElementById("playerLvSmall");
-const atkSpan=document.getElementById("atk");
-const coinSpan=document.getElementById("coin");
-const expTextSpan=document.getElementById("expText");
-const upgradeLvSpan=document.getElementById("upgradeLv");
-const upgradeCostSpan=document.getElementById("upgradeCost");
-const jobTextSpan=document.getElementById("jobText");
-const hpFill=document.getElementById("hpFill");
-const mpFill=document.getElementById("mpFill");
-const hudMpFill=document.getElementById("hudMpFill");
-const monsterNameElem=document.getElementById("monsterName");
-const areaTextElem=document.getElementById("areaText");
-const mapGrid=document.getElementById("mapGrid");
-const shopGrid=document.getElementById("shopGrid");
-const logElem=document.getElementById("log");
-const timeBadge=document.getElementById("timeBadge");
-const attackBtn=document.getElementById("attackBtn");
-const autoBtn=document.getElementById("autoBtn");
-const upgradeBtn=document.getElementById("upgradeBtn");
-const jobBtn=document.getElementById("jobBtn");
-const skill1Btn=document.getElementById("skill1Btn");
-const skill2Btn=document.getElementById("skill2Btn");
-const skill1Cd=document.getElementById("skill1Cd");
-const skill2Cd=document.getElementById("skill2Cd");
-const traitsDiv=document.getElementById("traits");
-const artifactsDiv=document.getElementById("artifacts");
-const merchantBtn=document.getElementById("merchantBtn");
-const bossBtnContainer=document.getElementById("bossBtnContainer");
-const bestiaryDiv=document.getElementById("bestiary");
-const rankingOpenBtn=document.getElementById("rankingOpenBtn");
-const rankingModal=document.getElementById("rankingModal");
-const rankingList=document.getElementById("rankingList");
-const playerNameInput=document.getElementById("playerName");
+/* ===== 몬스터 ===== */
+function spawnMonster(){
+ const a=areaIndex();
+ monsterMaxHp=30+a*40+kills*2;
+ monsterHp=monsterMaxHp;
+ $("monsterName").textContent =
+  monsters[a][Math.floor(Math.random()*monsters[a].length)];
+ $("areaText").textContent=areas[a].name;
+ document.getElementById("bg").style.backgroundImage=`url(${areas[a].bg})`;
+ updateUI();
+}
 
-/* audio */
-const hitSound=document.getElementById("hitSound");
-const killSound=document.getElementById("killSound");
-const upgradeSound=document.getElementById("upgradeSound");
-const failSound=document.getElementById("failSound");
-const levelSound=document.getElementById("levelSound");
-const bossSound=document.getElementById("bossSound");
+/* ===== 전투 ===== */
+function attack(){
+ monsterHp-=atk;
+ if(monsterHp<=0){
+  kills++;
+  coins+=10+areaIndex()*5;
+  exp+=8+areaIndex()*6;
+  levelUp();
+  spawnMonster();
+ }
+ updateUI();
+}
 
-/* 사운드 unlock */
-document.body.addEventListener("click", ()=>{
-  [hitSound,killSound,upgradeSound,failSound,levelSound,bossSound].forEach(s=>{s.volume=0.9;s.play().catch(()=>{});s.pause();s.currentTime=0;});
-  soundEnabled=true; appendLog("🔊 사운드 활성화");
-},{once:true});
-/* ===== 모바일 ===== */
-@media (max-width: 768px){
-  .container{
-    transform: scale(0.85);
-    transform-origin: top center;
-  }
+/* ===== 레벨업 ===== */
+function levelUp(){
+ while(exp>=nextExp){
+  exp-=nextExp;
+  playerLv++;
+  atk++;
+  nextExp=Math.floor(nextExp*1.3);
+ }
+ if(playerLv>=20 && jobStage===0) $("jobBtn").style.display="block";
+}
 
-  .hud{
-    grid-template-columns: repeat(3, 1fr);
-    gap:6px;
-  }
+/* ===== 강화 ===== */
+function upgrade(){
+ const cost=20+upgradeLv*6;
+ if(coins<cost){$("log").textContent="💸 골드 부족";return;}
+ coins-=cost;
+ upgradeLv++; atk++;
+ updateUI();
+}
 
-  .hud-box{
-    font-size:10px;
-    padding:4px 0;
-    border-radius:14px;
-  }
+/* ===== 전직 ===== */
+function jobChange(){
+ if(jobStage===0){job="⚔ 우유참치"; atk+=5; jobStage=1;}
+ $("jobBtn").style.display="none";
+ updateUI();
+}
 
-  .hud-box span{
-    font-size:13px;
-  }
+/* ===== 자동사냥 ===== */
+function toggleAuto(){
+ auto=!auto;
+ if(auto){
+  autoTimer=setInterval(attack,300);
+  $("log").textContent="🤖 자동사냥 ON";
+ }else{
+  clearInterval(autoTimer);
+  $("log").textContent="자동사냥 OFF";
+ }
+}
 
-  .btn{
-    padding:10px;
-    font-size:13px;
-    border-radius:16px;
-  }
+/* ===== 지도 ===== */
+function moveMap(){
+ if(playerLv<areas[areaIndex()+1]?.lv){
+  $("log").textContent="❌ 레벨 부족";
+  return;
+ }
+ spawnMonster();
+}
 
-  .monster{
-    padding:20px 12px;
-  }
+/* ===== UI ===== */
+function updateUI(){
+ $("playerLv").textContent=playerLv;
+ $("atk").textContent=atk;
+ $("coin").textContent=coins;
+ $("upgradeLv").textContent=upgradeLv;
+ $("expText").textContent=`${exp}/${nextExp}`;
+ $("jobText").textContent=job;
+ $("hpFill").style.width=(monsterHp/monsterMaxHp*100)+"%";
+ save();
+}
 
-  .monster-name{
-    font-size:18px;
-  }
-
-  .log{
-    font-size:12px;
-  }
-  }
-/* 저장/불러오기 */
+/* ===== 저장 ===== */
 function save(){
-  try{
-    const data={coins,atk,playerLv,exp,nextExp,upgradeLv,upgradeChance,job,jobStage,goldBonus,kills,monsterHp,monsterMaxHp,mp,maxMp,mpRegen,skillState,xpBoost,currentArea,traitPoints,artifacts,bestiary,bossLast};
-    localStorage.setItem("yugisaRPG2",JSON.stringify(data));
-    localStorage.setItem("yugisaRPG2_time",String(Date.now()));
-    timeBadge.textContent="저장됨";
-  }catch(e){console.error(e);appendLog("⚠ 저장 실패")}
+ localStorage.setItem("yugisaRPG",
+  JSON.stringify({coins,atk,playerLv,exp,nextExp,upgradeLv,job,jobStage,kills}));
 }
 function load(){
-  const raw=localStorage.getItem("yugisaRPG2"); if(!raw) return;
-  try{
-    const s=JSON.parse(raw);
-    coins=Number(s.coins)||coins; atk=Number(s.atk)||atk; playerLv=Number(s.playerLv)||playerLv; exp=Number(s.exp)||exp; nextExp=Number(s.nextExp)||nextExp;
-    upgradeLv=Number(s.upgradeLv)||upgradeLv; upgradeChance=Number(s.upgradeChance)||upgradeChance; job=s.job||job; jobStage=Number(s.jobStage)||jobStage;
-    goldBonus=Number(s.goldBonus)||goldBonus; kills=Number(s.kills)||kills; monsterHp=Number(s.monsterHp)||monsterHp; monsterMaxHp=Number(s.monsterMaxHp)||monsterMaxHp;
-    mp=Number(s.mp)||mp; maxMp=Number(s.maxMp)||maxMp; mpRegen=Number(s.mpRegen)||mpRegen; if(s.skillState) skillState=s.skillState; if(s.xpBoost) xpBoost=s.xpBoost;
-    currentArea=Number(s.currentArea)||currentArea; traitPoints=Number(s.traitPoints)||traitPoints; if(s.artifacts) artifacts=s.artifacts; if(s.bestiary) bestiary=s.bestiary; if(s.bossLast) bossLast=Number(s.bossLast)||bossLast;
-    appendLog("💾 저장 데이터 불러옴");
-  }catch(e){console.warn(e);appendLog("⚠ 저장 불러오기 실패")}
+ const s=JSON.parse(localStorage.getItem("yugisaRPG"));
+ if(!s)return;
+ Object.assign(window,s);
 }
 
-/* 로그 helper */
-function appendLog(txt){
-  const d=document.createElement("div"); d.textContent=txt; logElem.prepend(d);
-  while(logElem.children.length>300) logElem.removeChild(logElem.lastChild);
-}
-
-/* 오프라인 보상 */
-function grantOffline(){
-  const last=localStorage.getItem("yugisaRPG2_time"); if(!last) return;
-  const ms=Date.now()-Number(last); if(ms<60000) return;
-  const minutes=Math.min(Math.floor(ms/60000),60*12); const goldPerMin=Math.max(1,Math.floor((5+currentArea*2)*(1+(upgradeLv*0.02)))); const gained=minutes*goldPerMin; coins+=gained; appendLog(`⏳ 오프라인 보상: ${minutes}분 동안 ${gained}💰`);
-}
-
-/* render map */
-function renderMap(){ mapGrid.innerHTML=""; areas.forEach((a,idx)=>{ const n=document.createElement("div"); n.className="map-node"+(playerLv<a.lv?" locked":""); n.innerHTML=`<div style="font-weight:700">${a.name}</div><div style="font-size:12px;color:#bfc7ff">Req LV ${a.lv}</div>`; n.onclick=()=>{ if(playerLv<a.lv){ appendLog(`🚫 LV ${a.lv} 필요`); if(soundEnabled){ failSound.currentTime=0;failSound.play().catch(()=>{});} return;} currentArea=idx; spawnMonster(idx); appendLog(`📍 ${a.name}로 이동`); save(); }; mapGrid.appendChild(n); }); }
-
-/* render shop */
-function renderShop(){ shopGrid.innerHTML=""; shopItems.forEach(it=>{ const d=document.createElement("div"); d.className="shop-item"; d.innerHTML=`<div style="font-weight:800">${it.label}</div><div style="font-size:12px;color:#bfc7ff">${it.desc}</div><div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px">${it.price}💰</div><button class="btn small" onclick="buyItem('${it.id}')">구매</button></div>`; shopGrid.appendChild(d); }); }
-
-/* buy */
-function buyItem(id){ const it=shopItems.find(x=>x.id===id); if(!it) return; if(coins<it.price){ appendLog("💸 골드 부족"); if(soundEnabled){ failSound.currentTime=0; failSound.play().catch(()=>{});} return;} coins-=it.price; it.onBuy(); if(soundEnabled){ upgradeSound.currentTime=0; upgradeSound.play().catch(()=>{});} updateUI(); save(); }
-
-/* spawn monster */
-function spawnMonster(forcedArea){ const a=(typeof forcedArea==='number')?forcedArea:currentArea; monsterMaxHp=30+a*40+kills*2; monsterHp=monsterMaxHp; monsterNameElem.textContent = monsters[a][Math.floor(Math.random()*monsters[a].length)]; areaTextElem.textContent = areas[a].name; updateUI(); }
-
-/* calc trait modifiers + artifacts */
-function calcMods(){ const m={atkMult:1,upgradeChanceMod:0,goldMult:1,mpCostMult:1,autoSpeed:1,xpMult:1,mpRegenAdd:0}; const chosen=JSON.parse(localStorage.getItem("yugi_traits")||"[]"); chosen.forEach(id=>{ const td=traitDefs.find(t=>t.id===id); if(td && td.apply) td.apply(m); }); artifacts.forEach(a=>{ if(a && a.apply) a.apply(m); }); return m; }
-
-/* attack */
-function attack(){ if(monsterHp<=0) return; monsterHp-=atk; if(soundEnabled){ hitSound.currentTime=0; hitSound.play().catch(()=>{});} if(monsterHp<=0){ if(soundEnabled){ killSound.currentTime=0; killSound.play().catch(()=>{});} kills++; const areaIdx=areaIndex(); const mods=calcMods(); const goldGain=Math.floor((10+areaIdx*6)*(mods.goldMult||1)); coins+=goldGain; const baseXp=8+areaIdx*6; const xpMultFinal=(mods.xpMult||1)*(xpBoost.active && Date.now()<xpBoost.endAt?xpBoost.multiplier:1); const xpGain=Math.floor(baseXp*xpMultFinal); exp+=xpGain; bestiary[areaIdx]=bestiary[areaIdx]||{}; const mname=monsterNameElem.textContent; bestiary[areaIdx][mname]=(bestiary[areaIdx][mname]||0)+1; appendLog(`🪙 +${goldGain} / EXP +${xpGain} — 처치: ${mname}`); if(mname.includes("보스")){ saveRankingEntry(); } maybeExplorationEvent(); levelUp(); spawnMonster(); } updateUI(); }
-
-/* level up */
-function levelUp(){ let leveled=false; while(exp>=nextExp){ exp-=nextExp; playerLv++; atk++; leveled=true; if(soundEnabled){ levelSound.currentTime=0; levelSound.play().catch(()=>{});} appendLog(`🎉 LV업! ${playerLv}`); nextExp=Math.floor(nextExp*1.3); traitPoints++; } if(leveled){ saveRankingEntry(); updateUI(); save(); } }
-
-/* upgrade */
-function upgrade(){ const cost=20+upgradeLv*6; if(coins<cost){ appendLog("💸 골드 부족"); if(soundEnabled){ failSound.currentTime=0; failSound.play().catch(()=>{});} return;} coins-=cost; const chance = upgradeLv>=10?95:upgradeChance + (Number(localStorage.getItem("yugi_traits_chance")||0)); if(Math.random()*100<=chance){ upgradeLv++; atk += (upgradeLv>=10?2:1); upgradeChance=Math.max(10,upgradeChance-2); appendLog("✨ 강화 성공"); if(soundEnabled){ upgradeSound.currentTime=0; upgradeSound.play().catch(()=>{});} } else { appendLog("💥 강화 실패"); if(soundEnabled){ failSound.currentTime=0; failSound.play().catch(()=>{});} } updateUI(); save(); }
-
-/* job */
-function checkJob(){ if(playerLv>=20 && jobStage===0) jobBtn.style.display="inline-block"; else if(playerLv>=40 && jobStage===1) jobBtn.style.display="inline-block"; else if(playerLv>=60 && jobStage===2) jobBtn.style.display="inline-block"; else jobBtn.style.display="none"; }
-function jobChange(){ if(jobStage===0 && playerLv>=20){ job="⚔ 우유참치"; atk+=5; jobStage=1; } else if(jobStage===1 && playerLv>=40){ job="🔥 준브레드엉덩이"; atk+=10; goldBonus+=0.3; jobStage=2; } else if(jobStage===2 && playerLv>=60){ job="🌌 유기사"; atk+=20; goldBonus+=0.7; jobStage=3; } else{ appendLog("전직 조건 미충족"); return; } appendLog(`🌟 전직 완료 ${job}`); if(soundEnabled){ upgradeSound.currentTime=0; upgradeSound.play().catch(()=>{});} updateUI(); save(); }
-
-/* auto */
-function toggleAuto(){ autoHunt=!autoHunt; if(autoHunt){ autoInterval=setInterval(()=>{ if(monsterHp>0) attack(); },400 * (calcMods().autoSpeed||1)); autoBtn.textContent="🤖 자동사냥 ON"; appendLog("자동사냥 시작"); } else { clearInterval(autoInterval);autoInterval=null; autoBtn.textContent="🤖 자동사냥 OFF"; appendLog("자동사냥 중지"); } }
-
-/* skills */
-function useSkill(id){ const s=skillState[id]; const now=Date.now()/1000; if(now - s.last < s.cd){ appendLog(`${s.name} 쿨타임`); return; } const mods=calcMods(); const mpCost=Math.ceil(s.mp * (mods.mpCostMult||1)); if(mp<mpCost){ appendLog("MP 부족"); return; } mp-=mpCost; s.last=now; if(id===1){ const mult=4+Math.floor(s.level/2); const dmg=atk*mult; monsterHp-=dmg; appendLog(`💥 POWER STRIKE Lv${s.level} - ${dmg} dmg`); } else { const hits=2+Math.floor(s.level/2); let total=0; for(let i=0;i<hits;i++){ monsterHp-=atk; total+=atk; } appendLog(`🌀 WHIRLWIND Lv${s.level} - ${hits} hits, ${total} dmg`); } if(soundEnabled){ hitSound.currentTime=0; hitSound.play().catch(()=>{});} startCooldownUI(id); if(monsterHp<=0){ if(soundEnabled){ killSound.currentTime=0; killSound.play().catch(()=>{});} kills++; const areaIdx=areaIndex(); coins+=Math.floor((10+areaIdx*6) * goldBonus); exp+=Math.floor((8+areaIdx*6)*(1+upgradeLv*0.1+goldBonus)); levelUp(); spawnMonster(); } updateUI(); }
-
-/* cooldown UI */
-function startCooldownUI(id){ const cdElem=document.getElementById(`skill${id}Cd`); const s=skillState[id]; const total=s.cd; cdElem.style.width="100%"; let start=Date.now(); const tick=setInterval(()=>{ const elapsed=(Date.now()-start)/1000; const perc=Math.max(0,(1-elapsed/total))*100; cdElem.style.width=perc+"%"; if(elapsed>=total){ clearInterval(tick); cdElem.style.width="0%"; } },100); }
-
-/* exploration events */
-function maybeExplorationEvent(){ if(Math.random() < 0.12){ const r=Math.random(); if(r<0.4){ const goldFound=10+Math.floor(Math.random()*50); coins+=goldFound; appendLog(`📦 보물 상자! ${goldFound}💰`); } else if(r<0.75){ appendLog("🪤 작은 이벤트 발생 (연출)"); } else { spawnMerchant(); } updateUI(); } }
-
-/* merchant */
-function spawnMerchant(){ merchantBtn.style.display='inline-block'; merchantBtn.textContent="떠돌이 상인 등장!"; merchantBtn.onclick=()=>{ appendLog("🧾 떠돌이 상인과 거래"); if(coins>=200){ coins-=200; const art=artifactPool[Math.floor(Math.random()*artifactPool.length)]; const idx=artifacts.findIndex(x=>x===null); if(idx>=0){ artifacts[idx]=art; appendLog(`🔮 ${art.name} 획득(슬롯 ${idx+1})`); } else { appendLog("유물 슬롯이 가득. 환불"); coins+=200; } } else appendLog("💸 골드 부족"); merchantBtn.style.display='none'; updateUI(); save(); }; setTimeout(()=>{ merchantBtn.style.display='none'; },45000); }
-
-/* boss */
-function canStartBoss(){ return Date.now()-bossLast >= bossCooldown; }
-function showBossButton(){ bossBtnContainer.innerHTML=''; const btn=document.createElement("button"); btn.className='btn small'; btn.textContent='🔥 보스 레이드'; btn.onclick=()=>{ if(!canStartBoss()){ appendLog("보스 쿨다운 중"); return; } startBoss(); }; bossBtnContainer.appendChild(btn); }
-function startBoss(){ bossLast=Date.now(); save(); const prev=currentArea; currentArea=5; monsterMaxHp=400+playerLv*20; monsterHp=monsterMaxHp; monsterNameElem.textContent="보스: 유기사 (레이드)"; areaTextElem.textContent=areas[5].name; appendLog("⚔ 보스 레이드 시작 (2분)"); if(soundEnabled){ bossSound.currentTime=0; bossSound.play().catch(()=>{});} updateUI(); setTimeout(()=>{ appendLog("⏱ 보스 레이드 종료"); currentArea=prev; spawnMonster(); updateUI(); },120000); }
-
-/* helpers */
-function areaIndex(){ return currentArea; }
-
-/* traits UI */
-function renderTraits(){ traitsDiv.innerHTML=""; const chosen=JSON.parse(localStorage.getItem("yugi_traits")||"[]"); traitDefs.forEach(td=>{ const d=document.createElement("div"); d.className="trait"; d.innerHTML=`<div style="font-weight:800">${td.name}</div><div style="font-size:12px;color:#bfc7ff">${td.desc}</div><div style="margin-top:6px"><button class="btn small">${chosen.includes(td.id)?'해제':'선택'}</button></div>`; const btn=d.querySelector('button'); btn.onclick=()=>{ const now=JSON.parse(localStorage.getItem("yugi_traits")||"[]"); if(now.includes(td.id)){ now.splice(now.indexOf(td.id),1); localStorage.setItem("yugi_traits",JSON.stringify(now)); appendLog(`특성 해제: ${td.name}`); } else { if(traitPoints<=0){ appendLog("특성 포인트 부족"); return; } now.push(td.id); localStorage.setItem("yugi_traits",JSON.stringify(now)); traitPoints--; appendLog(`특성 선택: ${td.name}`); } renderTraits(); updateUI(); save(); }; traitsDiv.appendChild(d); }); document.getElementById("traitPoints").textContent=traitPoints; }
-
-/* artifacts UI */
-function renderArtifacts(){ artifactsDiv.innerHTML=""; artifacts.forEach((a,idx)=>{ const d=document.createElement("div"); d.className='art-slot'; if(!a){ d.innerHTML=`<div>슬롯 ${idx+1}</div><div style="font-size:12px;color:#bfc7ff">비어있음</div><div style="margin-top:6px"><button class="btn small" onclick="equipRandom(${idx})">무작위 장착</button></div>`; } else { d.innerHTML=`<div style="font-weight:800">${a.name}</div><div style="font-size:12px;color:#bfc7ff">${a.desc}</div><div style="margin-top:6px"><button class="btn small" onclick="unequip(${idx})">해제</button></div>`; } artifactsDiv.appendChild(d); }); }
-function equipRandom(slot){ const art=artifactPool[Math.floor(Math.random()*artifactPool.length)]; artifacts[slot]=art; appendLog(`🔮 ${art.name} 장착`); renderArtifacts(); updateUI(); save(); }
-function unequip(slot){ const a=artifacts[slot]; if(!a) return; appendLog(`🗑 ${a.name} 해제`); artifacts[slot]=null; renderArtifacts(); updateUI(); save(); }
-
-/* bestiary */
-function renderBestiary(){ bestiaryDiv.innerHTML=""; for(let i=0;i<areas.length;i++){ const obj=bestiary[i]||{}; const keys=Object.keys(obj); const cnt=keys.reduce((s,k)=>s+obj[k],0); const div=document.createElement("div"); div.textContent=`${areas[i].name}: ${cnt}마리`; bestiaryDiv.appendChild(div);} }
-
-/* costumes (simple) */
-document.getElementById("costumeDefault")?.addEventListener("click", ()=>{ document.body.style.filter='none'; appendLog("의상: 기본"); });
-document.getElementById("costumeCool")?.addEventListener("click", ()=>{ document.body.style.filter='contrast(1.05) saturate(1.1)'; appendLog("의상: 간지"); });
-
-/* attendance */
-function checkAttendance(){ const today=new Date().toISOString().slice(0,10); const last=localStorage.getItem("lastAttendance"); if(last!==today){ coins+=50; appendLog("🎁 출석 보상 50💰"); localStorage.setItem("lastAttendance",today); updateUI(); save(); } else appendLog("✅ 오늘 이미 출석"); }
-
-/* update UI */
-function updateUI(){ playerLvSpan.textContent=playerLv; playerLvSmall.textContent=playerLv; atkSpan.textContent=atk; coinSpan.textContent=coins; expTextSpan.textContent=`${exp}/${nextExp}`; upgradeLvSpan.textContent=upgradeLv; upgradeCostSpan.textContent=20+upgradeLv*6; jobTextSpan.textContent=job; hpFill.style.width=(monsterMaxHp>0?(monsterHp/monsterMaxHp*100):0)+"%"; mpFill.style.width=(mp/maxMp*100)+"%"; hudMpFill.style.width=(mp/maxMp*100)+"%"; checkJob(); renderMap(); renderShop(); renderTraits(); renderArtifacts(); renderBestiary(); save(); }
-
-/* init events */
-function wire(){ attackBtn.onclick=attack; autoBtn.onclick=toggleAuto; upgradeBtn.onclick=upgrade; skill1Btn.onclick=()=>useSkill(1); skill2Btn.onclick=()=>useSkill(2); jobBtn.onclick=jobChange; rankingOpenBtn.onclick=openRanking; window.addEventListener("beforeunload", ()=>{ save(); saveRankingEntry(); }); }
-function spawnMonsterInit(){ spawnMonster(); }
-
-/* init */
-function init(){ try{ load(); }catch(e){ console.warn(e);} grantOffline(); wire(); renderMap(); renderShop(); renderTraits(); renderArtifacts(); spawnMonster(); updateUI(); appendLog("✅ 초기화 완료"); setInterval(()=>{ if(mp<maxMp){ const mods=calcMods(); mp=Math.min(maxMp, mp+mpRegen+(mods.mpRegenAdd||0)); updateUI(); } if(xpBoost.active && Date.now()>=xpBoost.endAt){ xpBoost.active=false; xpBoost.multiplier=1; appendLog("✨ XP 부스터 종료"); } if(Math.random()<0.005) spawnMerchant(); showBossButton(); },1000); }
-
-/* ===========================
-   RANKING: localStorage 기반 로컬 랭킹
-   =========================== */
-function computeScore(){
-  // 추천 점수식
-  // 레벨(1000) + atk(200) + upgrade(300) + kills(10)
-  return (playerLv*1000) + (atk*200) + (upgradeLv*300) + (kills*10);
-}
-function saveRankingEntry(){
-  const name = (playerNameInput.value || "무명").trim().slice(0,24) || "무명";
-  const entry={name,lv:playerLv,atk,upgrade:upgradeLv,kills,score:computeScore(),time:Date.now()};
-  const rankings = JSON.parse(localStorage.getItem("yugisaRanking")||"[]");
-  // push then sort desc
-  rankings.push(entry);
-  rankings.sort((a,b)=>b.score - a.score || a.time - b.time);
-  localStorage.setItem("yugisaRanking", JSON.stringify(rankings.slice(0,10)));
-  appendLog("🏆 랭킹 저장됨");
-}
-function openRanking(){ const rankings = JSON.parse(localStorage.getItem("yugisaRanking")||"[]"); rankingList.innerHTML=""; if(rankings.length===0){ rankingList.textContent="랭킹이 비어있습니다.";} else { rankings.forEach((r,i)=>{ const row=document.createElement("div"); row.className="rank-row"; row.innerHTML=`<div>#${i+1} ${escapeHtml(r.name)}</div><div>LV ${r.lv} • ⚔ ${r.atk} • S:${r.score}</div>`; rankingList.appendChild(row); }); } rankingModal.style.display="flex"; }
-function closeRanking(){ rankingModal.style.display="none"; }
-function escapeHtml(s){ return s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-/* show ranking button hooked in init via wire() */
-function renderShop(){ shopGrid.innerHTML=""; shopItems.forEach(it=>{ const d=document.createElement("div"); d.className="shop-item"; d.innerHTML=`<div style="font-weight:800">${it.label}</div><div style="font-size:12px;color:#bfc7ff">${it.desc}</div><div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center"><div style="font-size:13px">${it.price}💰</div><button class="btn small" onclick="buyItem('${it.id}')">구매</button></div>`; shopGrid.appendChild(d); }); }
-
-/* debug helpers */
-window._resetSave = ()=>{ localStorage.removeItem("yugisaRPG2"); localStorage.removeItem("yugisaRPG2_time"); localStorage.removeItem("yugisaRanking"); location.reload(); };
-window._forceSpawn = (i)=>{ spawnMonster(i||currentArea); updateUI(); appendLog("강제 스폰"); };
-
-/* start */
-init();
-
+/* ===== 시작 ===== */
+load();
+spawnMonster();
+updateUI();
 </script>
+
 </body>
 </html>
