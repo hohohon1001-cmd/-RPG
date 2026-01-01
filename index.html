@@ -290,34 +290,20 @@ function save(){
   }
 }
 
-  function load(){
-    try{
-      const raw = localStorage.getItem('yugisa_save_v3');
-      if(!raw) return;
-      const s = JSON.parse(raw);
-      coins = Number(s.coins)||coins;
-      atk = Number(s.atk)||atk;
-      playerLv = Number(s.playerLv)||playerLv;
-      exp = Number(s.exp)||exp;
-      nextExp = Number(s.nextExp)||nextExp;
-      upgradeLv = Number(s.upgradeLv)||upgradeLv;
-      upgradeChance = Number(s.upgradeChance)||upgradeChance;
-      job = s.job||job;
-      jobStage = Number(s.jobStage)||jobStage;
-      goldBonus = Number(s.goldBonus)||goldBonus;
-      kills = Number(s.kills)||kills;
-      mp = Number(s.mp)||mp;
-      maxMp = Number(s.maxMp)||maxMp;
-      if(s.skillState) {
-        Object.keys(s.skillState).forEach(k=> skillState[k] = s.skillState[k]);
-      }
-      currentMap = Number(s.currentMap)||currentMap;
-      log("💽 저장 데이터 불러옴");
-    }catch(e){
-      console.warn("로드 실패", e);
-      log("⚠ 로드 실패");
-    }
+function save(){
+  try{
+    const data = {
+      coins, atk, playerLv, exp, nextExp, upgradeLv, upgradeChance,
+      job, jobStage, goldBonus, kills, mp, maxMp, skillState, currentMap
+    };
+    localStorage.setItem('yugisa_save_v3', JSON.stringify(data));
+    localStorage.setItem('yugisa_save_time', String(Date.now()));
+    timeBadge.textContent = "저장됨";
+    // ✅ 로그 출력 완전 제거
+  }catch(e){
+    console.error(e);
   }
+}
 
   // ===== Map render & spawn =====
   function renderMap(){
