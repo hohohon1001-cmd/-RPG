@@ -180,9 +180,9 @@ button.orange{background:linear-gradient(90deg,#ff9f1a,#ffbf69)}
   <!-- 지도 -->
   <div class="card list">
     <b>지도</b>
-    <button onclick="moveMap(0)">🌱 초원</button>
-    <button onclick="moveMap(1)">🌴 밀림</button>
-    <button onclick="moveMap(2)">❄ 설산</button>
+    <button onclick="moveMap(0)">🌱 잼못타</button>
+    <button onclick="moveMap(1)">🌴 급못타</button>
+    <button onclick="moveMap(2)">❄ 유기사의 차가운 농담</button>
     <button onclick="moveMap(3)">🍽 식탁</button>
     <button onclick="moveMap(4)">🧪 팀 나빠</button>
     <button onclick="moveMap(5)">💬 유기사 디스코드</button>
@@ -225,9 +225,9 @@ let auto=false, autoTimer=null;
    맵 & 몬스터 (원본 유지)
 ===================== */
 const maps=[
-  {name:"초원"},
-  {name:"밀림"},
-  {name:"설산"},
+  {name:"잼못타"},
+  {name:"급못타"},
+  {name:"유기사의 차가운 농담"},
   {name:"식탁"},
   {name:"팀 나빠"},
   {name:"유기사 디스코드"},
@@ -241,7 +241,7 @@ const monsters=[
   ["옷에 떨어진 밥풀","후식으론 준브레드 엉덩이"],
   ["짭 유기사","멜님으로 위장한 준브레드"],
   ["자칼님","흑화한 멜님","보스: 유기사ok"],
-  ["광기의 개발자","버그 덩어리","보스: 미1친놈"]
+  ["미1친놈 게임즈","베이컨(로블 애니)","보스: 로블 애니 유기사"]
 ];
 
 let monster={
