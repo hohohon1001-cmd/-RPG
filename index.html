@@ -3,228 +3,322 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>유기사 RPG</title>
+<title>웹 RPG</title>
 
 <style>
+*{box-sizing:border-box;font-family:Pretendard,system-ui;color:#fff}
 body{
   margin:0;
-  background:#0b0d15;
-  font-family:'Segoe UI',sans-serif;
-  color:#e6e8ff;
-}
-#bg{
-  position:fixed; inset:0;
+  background:#000;
   background-size:cover;
   background-position:center;
-  filter:brightness(.4);
-  z-index:-1;
+  transition:background 0.5s;
 }
-.container{
-  max-width:520px;
-  margin:auto;
+
+/* 전체 레이아웃 */
+#app{
+  display:flex;
+  gap:20px;
+  padding:20px;
+}
+.panel{
+  background:rgba(20,20,40,0.75);
+  backdrop-filter:blur(12px);
+  border-radius:16px;
+  padding:16px;
+}
+
+/* 왼쪽 */
+#left{width:320px}
+
+/* 오른쪽 */
+#right{flex:1}
+
+/* 카드 */
+.card{
+  background:rgba(0,0,0,0.35);
   padding:12px;
-}
-.hud{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:6px;
-}
-.box{
-  background:#12152a;
   border-radius:12px;
-  padding:6px;
-  text-align:center;
-  font-size:12px;
+  margin-bottom:12px;
 }
-.box span{
-  display:block;
-  font-size:16px;
-  font-weight:bold;
-  color:#9fa8ff;
-}
-.monster{
-  margin-top:10px;
-  background:#14183a;
-  border-radius:20px;
-  padding:18px;
-  text-align:center;
-}
-.monster-name{
-  font-size:18px;
-  font-weight:bold;
-  margin-bottom:8px;
-}
-.hp{
-  height:12px;
-  background:#111;
-  border-radius:8px;
-  overflow:hidden;
-}
-.hp div{
-  height:100%;
-  background:linear-gradient(90deg,#ff4040,#ff9b9b);
-}
-.btn{
+
+/* 버튼 */
+button{
+  background:#5865f2;
+  border:none;
+  border-radius:10px;
+  padding:10px;
   width:100%;
   margin-top:6px;
-  padding:12px;
-  border:none;
-  border-radius:16px;
-  background:#5865f2;
-  color:white;
-  font-weight:bold;
+  font-weight:700;
+  cursor:pointer;
 }
-.btn.small{padding:6px;font-size:12px;}
-.log{
-  text-align:center;
-  margin-top:6px;
-  min-height:18px;
-  font-size:13px;
-  color:#b7bbff;
+button.red{background:#f25f5c}
+button.green{background:#2ecc71}
+
+/* 체력바 */
+.bar{
+  height:12px;
+  background:#333;
+  border-radius:6px;
+  overflow:hidden;
 }
-.list .item{
-  background:#10132a;
-  border-radius:10px;
-  padding:6px;
-  margin-top:4px;
+.bar > div{
+  height:100%;
+  background:linear-gradient(90deg,#ff6a6a,#ff9f9f);
+}
+
+/* MP */
+.mp > div{
+  background:linear-gradient(90deg,#4facfe,#00f2fe);
+}
+
+/* 지도 */
+.mapBtn{
   display:flex;
   justify-content:space-between;
   align-items:center;
+  margin-top:6px;
+  background:#3944bc;
+  padding:8px;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+/* 로그 */
+#log{
+  height:120px;
+  overflow:auto;
+  font-size:13px;
+  opacity:0.9;
+}
+
+/* 모바일 */
+@media(max-width:900px){
+  #app{flex-direction:column}
+  #left{width:100%}
 }
 </style>
 </head>
 
 <body>
-<div id="bg"></div>
 
-<div class="container">
+<div id="app">
 
-<div class="hud">
-  <div class="box">LV<span id="lv">1</span></div>
-  <div class="box">ATK<span id="atk">1</span></div>
-  <div class="box">💰<span id="coin">0</span></div>
-  <div class="box">EXP<span id="exp">0/10</span></div>
-  <div class="box">MP<span id="mp">10</span></div>
-  <div class="box">MAP<span id="mapName">초원</span></div>
+<!-- LEFT -->
+<div id="left" class="panel">
+
+<div class="card">
+<b>LV</b> <span id="lv"></span><br>
+<b>ATK</b> <span id="atk"></span><br>
+<b>GOLD</b> <span id="gold"></span>
 </div>
 
-<div class="monster" onclick="attack()">
-  <div class="monster-name" id="mName"></div>
-  <div class="hp"><div id="hpBar"></div></div>
+<div class="card">
+<b>EXP</b> <span id="exp"></span>/<span id="need"></span>
+<div class="bar"><div id="expBar"></div></div>
 </div>
 
-<button class="btn" onclick="toggleAuto()">🤖 자동사냥</button>
+<div class="card">
+<b>HP</b>
+<div class="bar"><div id="hpBar"></div></div>
+<b>MP</b>
+<div class="bar mp"><div id="mpBar"></div></div>
+</div>
 
-<div class="list" id="mapList"></div>
+<button onclick="attack()">⚔ 공격</button>
+<button onclick="toggleAuto()">🤖 자동사냥</button>
+<button onclick="upgrade()">🔥 강화</button>
+<button onclick="save()">💾 저장</button>
 
-<div class="log" id="log"></div>
+</div>
 
+<!-- RIGHT -->
+<div id="right" class="panel">
+
+<div class="card">
+<b id="monsterName"></b>
+<div class="bar"><div id="monsterHpBar"></div></div>
+</div>
+
+<div class="card">
+<b>스킬</b>
+<button onclick="skill()">⚡ POWER STRIKE (MP20)</button>
+</div>
+
+<div class="card">
+<b>지도</b>
+<div id="mapList"></div>
+</div>
+
+<div class="card">
+<b>상점</b>
+<button onclick="buyAtk()">ATK +1 (50G)</button>
+<button onclick="buyMp()">MP 회복 (30G)</button>
+</div>
+
+<div class="card">
+<b>랭킹</b>
+<div id="rank"></div>
+</div>
+
+<div class="card">
+<b>로그</b>
+<div id="log"></div>
+</div>
+
+</div>
 </div>
 
 <script>
-/* ===== 맵 ===== */
-const maps=[
- {name:"🌱 초원",bg:"https://images.unsplash.com/photo-1501785888041-af3ef285b470"},
- {name:"🌴 밀림",bg:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e"},
- {name:"❄ 설산",bg:"https://images.unsplash.com/photo-1482192596544-9eb780fc7f66"},
- {name:"🍽 식탁",bg:"https://images.unsplash.com/photo-1504674900247-0877df9cc836"},
- {name:"🌋 팀 나빠",bg:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee"},
- {name:"💬 유기사 디스코드",bg:"https://images.unsplash.com/photo-1518770660439-4636190af475"},
- {name:"💀 미1친놈 게임즈",bg:"https://images.unsplash.com/photo-1519681393784-d120267933ba"}
+/* ===================== 데이터 ===================== */
+
+let player={
+  lv:1, atk:1, gold:0,
+  exp:0, need:10,
+  hp:100, mp:50, maxHp:100, maxMp:50
+};
+
+let maps=[
+ {name:"초원", bg:"https://images.unsplash.com/photo-1501785888041-af3ef285b470",
+  monsters:[
+   {name:"슬라임",hp:30,exp:3,gold:2},
+   {name:"고블린",hp:50,exp:5,gold:4}
+  ]},
+ {name:"밀림", bg:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+  monsters:[
+   {name:"독거미",hp:80,exp:8,gold:6},
+   {name:"정글전사",hp:120,exp:12,gold:10}
+  ]},
+ {name:"미1친놈 게임즈", bg:"https://images.unsplash.com/photo-1519681393784-d120267933ba",
+  monsters:[
+   {name:"버그몬",hp:150,exp:15,gold:20},
+   {name:"에러비스트",hp:200,exp:20,gold:30},
+   {name:"서버파괴자",hp:400,exp:50,gold:100}
+  ]}
 ];
 
-/* ===== 몬스터 (원본 유지 + 신규 추가) ===== */
-const monsters=[
- ["어려워 하시는 멜님","벨키님"],
- ["또 못깨고 있는 멜님","먼저깬 우참님"],
- ["왕이 넘어지면? 킹콩 ㅋㅋㅋ","아니 실수로 라이벌 들어감"],
- ["옷에 떨어진 밥풀","후식으론 준브레드 엉덩이"],
- ["짭 유기사","멜님으로 위장한 준브레드"],
- ["자칼님","흑화한 멜님","보스: 유기사ok"],
- ["미1친놈 게임즈","베이컨(로블 애니)","보스: 최종 유기사"]
-];
+let curMap=0, curMonster=0;
+let mHp=maps[0].monsters[0].hp;
+let autoTimer=null;
 
-/* ===== 상태 ===== */
-let lv=1,atk=1,coin=0,exp=0,nextExp=10;
-let mp=10,mapIndex=0;
-let mhp=20,hp=20;
-let auto=false,autoI;
+/* ===================== 함수 ===================== */
 
-/* ===== UI ===== */
-const bg=document.getElementById("bg");
-const mName=document.getElementById("mName");
-const hpBar=document.getElementById("hpBar");
-const log=document.getElementById("log");
-
-/* ===== 저장 ===== */
-function save(){
- localStorage.setItem("rpgSave",JSON.stringify({lv,atk,coin,exp,nextExp,mp,mapIndex}));
-}
-function load(){
- const s=JSON.parse(localStorage.getItem("rpgSave")||"null");
- if(!s)return;
- Object.assign(window,s);
+function log(t){
+  logDiv.innerHTML += t+"<br>";
+  logDiv.scrollTop=9999;
 }
 
-/* ===== 몬스터 ===== */
-function spawn(){
- hp=mhp=20+mapIndex*30+lv*5;
- mName.textContent=monsters[mapIndex][Math.floor(Math.random()*monsters[mapIndex].length)];
- bg.style.backgroundImage=`url(${maps[mapIndex].bg})`;
- document.getElementById("mapName").textContent=maps[mapIndex].name;
- update();
+function refresh(){
+  lv.textContent=player.lv;
+  atk.textContent=player.atk;
+  gold.textContent=player.gold;
+  exp.textContent=player.exp;
+  need.textContent=player.need;
+
+  expBar.style.width=(player.exp/player.need*100)+"%";
+  hpBar.style.width=(player.hp/player.maxHp*100)+"%";
+  mpBar.style.width=(player.mp/player.maxMp*100)+"%";
+
+  let m=maps[curMap].monsters[curMonster];
+  monsterName.textContent=m.name;
+  monsterHpBar.style.width=(mHp/m.hp*100)+"%";
+
+  document.body.style.backgroundImage=`url(${maps[curMap].bg})`;
+  rank.textContent=`LV ${player.lv} / GOLD ${player.gold}`;
 }
 
-/* ===== 전투 ===== */
 function attack(){
- hp-=atk;
- if(hp<=0){
-  coin+=10+mapIndex*5;
-  exp+=5+mapIndex*3;
-  if(exp>=nextExp){exp-=nextExp;lv++;atk++;nextExp=Math.floor(nextExp*1.3);}
-  spawn();
- }
- update();
+  let m=maps[curMap].monsters[curMonster];
+  mHp-=player.atk;
+  if(mHp<=0){
+    player.exp+=m.exp;
+    player.gold+=m.gold;
+    log(m.name+" 처치!");
+    if(player.exp>=player.need){
+      player.exp=0;
+      player.lv++;
+      player.need+=10;
+      player.atk++;
+      log("레벨업!");
+    }
+    curMonster=(curMonster+1)%maps[curMap].monsters.length;
+    mHp=maps[curMap].monsters[curMonster].hp;
+  }
+  refresh();
 }
 
-/* ===== 자동 ===== */
 function toggleAuto(){
- auto=!auto;
- if(auto) autoI=setInterval(attack,250);
- else clearInterval(autoI);
+  if(autoTimer){
+    clearInterval(autoTimer);
+    autoTimer=null;
+    log("자동사냥 OFF");
+  }else{
+    autoTimer=setInterval(attack,800);
+    log("자동사냥 ON");
+  }
 }
 
-/* ===== 지도 ===== */
-function renderMap(){
- const list=document.getElementById("mapList");
- list.innerHTML="";
- maps.forEach((m,i)=>{
-  const d=document.createElement("div");
-  d.className="item";
-  d.innerHTML=`${m.name}<button class="btn small" onclick="move(${i})">이동</button>`;
-  list.appendChild(d);
- });
-}
-function move(i){
- mapIndex=i;
- spawn();
+function upgrade(){
+  let cost=player.atk*20;
+  if(player.gold>=cost){
+    player.gold-=cost;
+    player.atk++;
+    log("강화 성공");
+    refresh();
+  }
 }
 
-/* ===== UI ===== */
-function update(){
- document.getElementById("lv").textContent=lv;
- document.getElementById("atk").textContent=atk;
- document.getElementById("coin").textContent=coin;
- document.getElementById("exp").textContent=`${exp}/${nextExp}`;
- document.getElementById("mp").textContent=mp;
- hpBar.style.width=(hp/mhp*100)+"%";
- save();
+function skill(){
+  if(player.mp<20)return;
+  player.mp-=20;
+  mHp-=player.atk*3;
+  log("POWER STRIKE!");
+  refresh();
 }
 
-/* ===== 시작 ===== */
-load();
-renderMap();
-spawn();
+function buyAtk(){
+  if(player.gold>=50){
+    player.gold-=50;
+    player.atk++;
+    refresh();
+  }
+}
+
+function buyMp(){
+  if(player.gold>=30){
+    player.gold-=30;
+    player.mp=player.maxMp;
+    refresh();
+  }
+}
+
+function save(){
+  localStorage.setItem("rpgSave",JSON.stringify(player));
+  log("저장됨");
+}
+
+/* 지도 생성 */
+maps.forEach((m,i)=>{
+  let d=document.createElement("div");
+  d.className="mapBtn";
+  d.innerHTML=`${m.name}<span>이동</span>`;
+  d.onclick=()=>{
+    curMap=i;
+    curMonster=0;
+    mHp=maps[i].monsters[0].hp;
+    log(m.name+" 이동");
+    refresh();
+  };
+  mapList.appendChild(d);
+});
+
+/* 로드 */
+let s=localStorage.getItem("rpgSave");
+if(s)player=JSON.parse(s);
+
+refresh();
 </script>
+
 </body>
 </html>
