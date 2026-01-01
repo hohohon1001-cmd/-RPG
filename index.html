@@ -4,150 +4,551 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>유기사 RPG — 안정판</title>
-
 <style>
 :root{
   --bg1:#071027; --bg2:#020212;
   --accent:#7c8cff; --accent2:#ff9b9b;
 }
 *{box-sizing:border-box}
-html,body{height:100%;margin:0;font-family:'Segoe UI',system-ui,Arial;
-background:linear-gradient(180deg,var(--bg1),var(--bg2));color:#e9ecff}
+html,body{height:100%;margin:0;font-family:'Segoe UI',system-ui,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:#e9ecff}
 body{display:flex;align-items:center;justify-content:center;padding:20px}
-.app{width:100%;max-width:1100px;border-radius:16px;
-background:linear-gradient(180deg,rgba(2,6,23,0.55),rgba(1,3,10,0.75));
-padding:16px;display:grid;grid-template-columns:320px 1fr;gap:16px;
-box-shadow:0 12px 40px rgba(0,0,0,0.6)}
+.app{width:100%;max-width:1100px;border-radius:16px;background:linear-gradient(180deg,rgba(2,6,23,0.55),rgba(1,3,10,0.75));padding:16px;display:grid;grid-template-columns:320px 1fr;gap:16px;box-shadow:0 12px 40px rgba(0,0,0,0.6)}
 .card{background:rgba(255,255,255,0.02);padding:12px;border-radius:12px}
 .hud-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .hud-item{background:rgba(255,255,255,0.01);padding:10px;border-radius:10px;text-align:center}
 .hud-item .label{font-size:12px;color:#bfc7ff}
 .hud-item .value{font-weight:800;font-size:18px;color:var(--accent)}
 .area{font-weight:800;text-align:center;margin:8px 0}
-.monster-card{text-align:center;padding:16px;border-radius:12px;
-background:linear-gradient(180deg,rgba(10,14,30,0.5),rgba(5,7,12,0.5))}
+.monster-card{text-align:center;padding:16px;border-radius:12px;background:linear-gradient(180deg,rgba(10,14,30,0.5),rgba(5,7,12,0.5))}
 .monster-name{font-size:20px;font-weight:800;margin-bottom:8px}
 .hp-bar{height:14px;background:#111;border-radius:10px;overflow:hidden}
-.hp-fill{height:100%;background:linear-gradient(90deg,#ff3b3b,#ff9b9b);
-width:100%;transition:width .08s}
-.btn{padding:10px 12px;border-radius:12px;border:none;cursor:pointer;
-background:linear-gradient(90deg,var(--accent),#5b62e8);color:#fff;font-weight:800}
+.hp-fill{height:100%;background:linear-gradient(90deg,#ff3b3b,#ff9b9b);width:100%;transition:width .08s}
+.btn{display:inline-block;padding:10px 12px;border-radius:12px;border:none;cursor:pointer;background:linear-gradient(90deg,var(--accent),#5b62e8);color:#fff;font-weight:800}
 .btn.small{padding:8px 10px;font-size:13px}
-.btn.warn{background:linear-gradient(90deg,#ff7b7b,#ffb86b);color:#110}
+.btn.warn{background:linear-gradient(90deg,#ff7b7b,#ffb86b);color:#110f0f}
 .btn.auto{background:linear-gradient(90deg,#00ffa6,#00b37a)}
 .map-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-.map-node{padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);
-cursor:pointer;text-align:center}
-.map-node.locked{opacity:.45;cursor:not-allowed}
+.map-node{padding:10px;border-radius:10px;background:rgba(255,255,255,0.02);cursor:pointer;text-align:center}
+.map-node.locked{opacity:.45;cursor:not-allowed;filter:grayscale(30%)}
 .shop-grid{display:flex;flex-direction:column;gap:8px}
-.shop-item{display:flex;justify-content:space-between;align-items:center;
-padding:8px;border-radius:8px;background:rgba(255,255,255,0.01)}
+.shop-item{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:rgba(255,255,255,0.01)}
 .skill-row{display:flex;gap:8px;margin-top:10px}
-.skill-btn{flex:1;padding:10px;border-radius:10px;
-background:linear-gradient(90deg,#ff8b8b,#ffc26f);color:#110;font-weight:800;
-cursor:pointer;position:relative}
-.cooldown{position:absolute;left:0;top:0;height:100%;background:rgba(0,0,0,0.45);
-width:0%;transition:width .2s linear;color:#fff;
-display:flex;align-items:center;justify-content:center}
-.log{height:140px;overflow:auto;padding:8px;border-radius:8px;
-background:rgba(255,255,255,0.02);font-size:13px}
+.skill-btn{flex:1;padding:10px;border-radius:10px;background:linear-gradient(90deg,#ff8b8b,#ffc26f);color:#110;font-weight:800;cursor:pointer;position:relative;overflow:hidden}
+.cooldown{position:absolute;left:0;top:0;height:100%;background:rgba(0,0,0,0.45);width:0%;transition:width .2s linear;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800}
+.log{height:140px;overflow:auto;padding:8px;border-radius:8px;background:linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));font-size:13px}
+@media(max-width:900px){.app{grid-template-columns:1fr}.map-grid{grid-template-columns:repeat(3,1fr)}}
 </style>
 </head>
-
 <body>
-<div class="app">
+<div class="app" id="app">
+  <!-- LEFT -->
+  <div>
+    <div class="card">
+      <div class="hud-grid">
+        <div class="hud-item"><div class="label">LV</div><div id="playerLv" class="value">1</div></div>
+        <div class="hud-item"><div class="label">ATK</div><div id="atk" class="value">1</div></div>
+        <div class="hud-item"><div class="label">강화</div><div id="upgradeLv" class="value">1</div></div>
+      </div>
+      <div style="margin-top:10px">
+        <div class="label" style="color:#bfc7ff">EXP</div>
+        <div class="hp-bar" style="height:10px"><div id="expFill" class="hp-fill" style="background:linear-gradient(90deg,#9b8bff,#c4b5ff);width:0%"></div></div>
+      </div>
+      <div style="margin-top:8px">
+        <div class="label" style="color:#bfc7ff">HP</div>
+        <div class="hp-bar"><div id="playerHpFill" class="hp-fill" style="width:100%"></div></div>
+      </div>
+      <div style="margin-top:8px">
+        <div class="label" style="color:#bfc7ff">MP</div>
+        <div class="hp-bar"><div id="playerMpFill" class="hp-fill" style="background:linear-gradient(90deg,#4be0ff,#2aa8ff);width:100%"></div></div>
+      </div>
 
-<!-- (중간 UI / 맵 / 몬스터 / 상점 / 스킬 구조는 네 원본 그대로 유지) -->
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button id="attackBtn" class="btn">⚔ 공격</button>
+        <button id="autoBtn" class="btn auto">🤖 자동사냥 OFF</button>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button id="upgradeBtn" class="btn">🔧 강화 (<span id="upgradeCost">20</span>)</button>
+        <button id="jobBtn" class="btn warn" style="display:none">🔮 전직</button>
+      </div>
+      <div style="margin-top:10px">
+        <div class="label" style="color:#bfc7ff">골드</div>
+        <div id="coin" style="font-weight:800;color:#ffd78e">0</div>
+      </div>
+    </div>
 
-<!-- 로그 -->
-<div class="card">
-  <div style="display:flex;justify-content:space-between">
-    <strong>로그</strong>
-    <small id="timeBadge">저장됨</small>
+    <div class="card" style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>출석체크</strong>
+        <button id="checkBtn" class="btn small">📅 출석</button>
+      </div>
+      <div id="attendanceMsg" class="small" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <strong>상점</strong>
+      <div id="shopGrid" class="shop-grid" style="margin-top:8px"></div>
+    </div>
+
   </div>
-  <div id="log" class="log">여정이 시작되었다…</div>
+
+  <!-- RIGHT -->
+  <div>
+    <div class="card monster-card">
+      <div class="monster-name" id="monsterName">멜님</div>
+      <div class="hp-bar"><div id="monsterHpFill" class="hp-fill" style="width:100%"></div></div>
+
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button id="spawnBtn" class="btn small">스폰 리셋</button>
+        <button id="bossBtn" class="btn small">보스 소환</button>
+        <button id="saveBtn" class="btn small">💾 저장</button>
+      </div>
+
+      <div class="skill-row">
+        <div id="skill1" class="skill-btn">POWER STRIKE<br><small class="small">MP20 · CD6s</small><div id="skill1Cd" class="cooldown"></div></div>
+        <div id="skill2" class="skill-btn" style="background:linear-gradient(90deg,#ffd18a,#ff8b8b)">WHIRLWIND<br><small class="small">MP40 · CD12s</small><div id="skill2Cd" class="cooldown"></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>지도</strong>
+        <small class="small">클릭하면 이동 (레벨조건)</small>
+      </div>
+      <div id="mapGrid" class="map-grid" style="margin-top:8px"></div>
+    </div>
+
+    <div class="card" style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <strong>로그</strong>
+        <div id="timeBadge" class="small">저장됨</div>
+      </div>
+      <div id="log" class="log" style="margin-top:8px">여정이 시작되었다…</div>
+    </div>
+  </div>
 </div>
 
-</div>
+<!-- audio elements -->
+<audio id="hitSound" src="https://assets.mixkit.co/sfx/preview/mixkit-quick-hit-2187.mp3"></audio>
+<audio id="killSound" src="https://assets.mixkit.co/sfx/preview/mixkit-video-game-win-2016.mp3"></audio>
+<audio id="upgradeSound" src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3"></audio>
+<audio id="failSound" src="https://assets.mixkit.co/sfx/preview/mixkit-wrong-answer-fail-notification-946.mp3"></audio>
+<audio id="levelSound" src="https://assets.mixkit.co/sfx/preview/mixkit-magic-game-win-1949.mp3"></audio>
+<audio id="bossSound" src="https://assets.mixkit.co/sfx/preview/mixkit-dramatic-hit-166.mp3"></audio>
 
 <script>
-document.addEventListener('DOMContentLoaded',()=>{
+/* Use DOMContentLoaded to ensure all elements exist before binding */
+document.addEventListener('DOMContentLoaded', ()=>{
 
-const logEl = document.getElementById('log');
-const timeBadge = document.getElementById('timeBadge');
+  // ===== DOM cache =====
+  const logEl = document.getElementById('log');
+  const timeBadge = document.getElementById('timeBadge');
+  const monsterNameEl = document.getElementById('monsterName');
+  const monsterHpFill = document.getElementById('monsterHpFill');
+  const playerLvEl = document.getElementById('playerLv');
+  const atkEl = document.getElementById('atk');
+  const coinEl = document.getElementById('coin');
+  const expFill = document.getElementById('expFill');
+  const playerHpFill = document.getElementById('playerHpFill');
+  const playerMpFill = document.getElementById('playerMpFill');
+  const upgradeLvEl = document.getElementById('upgradeLv');
+  const upgradeCostEl = document.getElementById('upgradeCost');
+  const jobBtn = document.getElementById('jobBtn');
+  const autoBtn = document.getElementById('autoBtn');
+  const mapGrid = document.getElementById('mapGrid');
+  const shopGrid = document.getElementById('shopGrid');
+  const attendanceMsg = document.getElementById('attendanceMsg');
+  const skill1Cd = document.getElementById('skill1Cd');
+  const skill2Cd = document.getElementById('skill2Cd');
 
-/* ===== 로그 ===== */
-function log(t){
-  const d=document.createElement('div');
-  d.textContent=t;
-  logEl.prepend(d);
-}
+  const hitSound = document.getElementById('hitSound');
+  const killSound = document.getElementById('killSound');
+  const upgradeSound = document.getElementById('upgradeSound');
+  const failSound = document.getElementById('failSound');
+  const levelSound = document.getElementById('levelSound');
+  const bossSound = document.getElementById('bossSound');
 
-/* ===== 게임 상태 (원본 유지) ===== */
-let coins=0, atk=1, playerLv=1, exp=0, nextExp=10;
-let upgradeLv=1, upgradeChance=90;
-let job="멜로우급", jobStage=0, goldBonus=1, kills=0;
-let mp=100, maxMp=100, currentMap=0;
+  // ===== Game state =====
+  let coins = 0;
+  let atk = 1;
+  let playerLv = 1;
+  let exp = 0;
+  let nextExp = 10;
+  let upgradeLv = 1;
+  let upgradeChance = 90;
+  let job = "멜로우급";
+  let jobStage = 0;
+  let goldBonus = 1;
+  let kills = 0;
 
-/* =========================
-   ✅ 저장 로직 (수정됨)
-   ========================= */
-function save(silent=true){
-  try{
-    const data={
-      coins,atk,playerLv,exp,nextExp,upgradeLv,upgradeChance,
-      job,jobStage,goldBonus,kills,mp,maxMp,currentMap
-    };
-    localStorage.setItem("yugisa_save_v3",JSON.stringify(data));
-    localStorage.setItem("yugisa_save_time",Date.now());
-    timeBadge.textContent="저장됨";
-    if(!silent) log("💾 저장됨");
-  }catch(e){
-    console.error(e);
-    if(!silent) log("⚠ 저장 실패");
+  let currentMap = 0;
+  let monsterHp = 10;
+  let monsterMaxHp = 10;
+
+  let mp = 100, maxMp = 100, mpRegen = 1;
+
+  let autoHunt = false, autoInterval = null;
+
+  const skillState = {
+    1: { cd:6, last: -9999, mp:20, name:"POWER STRIKE" },
+    2: { cd:12, last: -9999, mp:40, name:"WHIRLWIND" }
+  };
+
+  const xpBoost = { active:false, endAt:0, multiplier:1 };
+
+  // ===== Map & Monster data (user names kept) =====
+  const areas = [
+    {name:"🌱 잼못타", lv:1, bg:"https://images.unsplash.com/photo-1501785888041-af3ef285b470"},
+    {name:"🌴 급못타", lv:10, bg:"https://images.unsplash.com/photo-1507525428034-b723cf961d3e"},
+    {name:"❄ 유기사의 차가운 농담", lv:20, bg:"https://images.unsplash.com/photo-1482192596544-9eb780fc7f66"},
+    {name:"🏜 식탁", lv:30, bg:"https://images.unsplash.com/photo-1504674900247-0877df9cc836"},
+    {name:"🌋 팀 나빠", lv:40, bg:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee"},
+    {name:"🌌 유기사 디스코드", lv:50, bg:"https://images.unsplash.com/photo-1518770660439-4636190af475"},
+    {name:"🎮 유기사 로블 애니", lv:60, bg:"https://images.unsplash.com/photo-1519681393784-d120267933ba"}
+  ];
+
+  const monsters = [
+    ["어려워 하시는 멜님","벨키님"],
+    ["또 못깨고 있는 멜님","먼저깬 우참님"],
+    ["왕이 넘어지면? 킹콩 ㅋㅋㅋ","아니 실수로 라이벌 들어감"],
+    ["옷에 떨어진 밥풀","후식으론 준브레드 엉덩이"],
+    ["짭 유기사","멜님으로 위장한 준브레드"],
+    ["자칼님","흑화한 멜님","보스: 유기사ok"],
+    ["유기사","덩득과자 소금맛","보스: 베이컨"]
+  ];
+
+  // ===== Shop items =====
+  const shopItems = [
+    { id:"atk_boost", label:"공격의 보석", desc:"ATK +1 (영구)", price:150, onBuy:()=>{
+      atk += 1; log("🗡 공격력 +1 획득");
+    }},
+    { id:"mana_pot", label:"마나 물약", desc:"MP +50 즉시 회복", price:40, onBuy:()=>{
+      mp = Math.min(maxMp, mp+50); log("🍷 마나 +50");
+    }},
+    { id:"cool_reduce", label:"스킬 연마서", desc:"모든 스킬 쿨다운 -1초", price:120, onBuy:()=>{
+      Object.values(skillState).forEach(s=> s.cd = Math.max(1, s.cd-1));
+      log("📚 스킬 쿨다운 감소");
+    }},
+    { id:"xp_boost", label:"XP 부스터(30s)", desc:"경험치 3배 30초", price:100, onBuy:()=>{
+      xpBoost.active=true; xpBoost.multiplier=3; xpBoost.endAt=Date.now()+30000;
+      log("✨ XP 3배 적용 (30s)");
+    }}
+  ];
+
+  // ===== Utility: log =====
+  function log(text){
+    const d = document.createElement('div');
+    d.textContent = text;
+    logEl.prepend(d);
   }
-}
 
-function load(){
-  const raw=localStorage.getItem("yugisa_save_v3");
-  if(!raw) return;
-  try{
-    const s=JSON.parse(raw);
-    coins=s.coins??coins;
-    atk=s.atk??atk;
-    playerLv=s.playerLv??playerLv;
-    exp=s.exp??exp;
-    nextExp=s.nextExp??nextExp;
-    upgradeLv=s.upgradeLv??upgradeLv;
-    upgradeChance=s.upgradeChance??upgradeChance;
-    job=s.job??job;
-    jobStage=s.jobStage??jobStage;
-    goldBonus=s.goldBonus??goldBonus;
-    kills=s.kills??kills;
-    mp=s.mp??mp;
-    maxMp=s.maxMp??maxMp;
-    currentMap=s.currentMap??currentMap;
-  }catch(e){
-    console.warn("로드 실패",e);
+  // ===== Save/Load =====
+  // save: silent=true -> do not append log, only update badge/time
+  function save(silent = true){
+    try{
+      const data = {
+        coins, atk, playerLv, exp, nextExp, upgradeLv, upgradeChance,
+        job, jobStage, goldBonus, kills, mp, maxMp, skillState, currentMap
+      };
+      localStorage.setItem('yugisa_save_v3', JSON.stringify(data));
+      localStorage.setItem('yugisa_save_time', String(Date.now()));
+      // update UI badge/time only
+      timeBadge.textContent = "저장됨";
+      if(!silent){
+        log("💾 저장 완료");
+      }
+    }catch(e){
+      console.error(e);
+      if(!silent) log("⚠ 저장 실패");
+    }
   }
-}
 
-/* ===== UI 갱신 시 자동저장 (무음) ===== */
-function updateUI(){
-  save(); // silent autosave
-}
+  function load(){
+    try{
+      const raw = localStorage.getItem('yugisa_save_v3');
+      if(!raw) return;
+      const s = JSON.parse(raw);
+      coins = Number(s.coins)||coins;
+      atk = Number(s.atk)||atk;
+      playerLv = Number(s.playerLv)||playerLv;
+      exp = Number(s.exp)||exp;
+      nextExp = Number(s.nextExp)||nextExp;
+      upgradeLv = Number(s.upgradeLv)||upgradeLv;
+      upgradeChance = Number(s.upgradeChance)||upgradeChance;
+      job = s.job||job;
+      jobStage = Number(s.jobStage)||jobStage;
+      goldBonus = Number(s.goldBonus)||goldBonus;
+      kills = Number(s.kills)||kills;
+      mp = Number(s.mp)||mp;
+      maxMp = Number(s.maxMp)||maxMp;
+      if(s.skillState) {
+        Object.keys(s.skillState).forEach(k=> skillState[k] = s.skillState[k]);
+      }
+      currentMap = Number(s.currentMap)||currentMap;
+      log("💽 저장 데이터 불러옴");
+    }catch(e){
+      console.warn("로드 실패", e);
+      log("⚠ 로드 실패");
+    }
+  }
 
-/* ===== 저장 버튼만 로그 출력 ===== */
-document.getElementById("saveBtn")?.addEventListener("click",()=>{
-  save(false); // 로그 출력
-});
+  // ===== Map render & spawn =====
+  function renderMap(){
+    mapGrid.innerHTML = '';
+    areas.forEach((a, idx)=>{
+      const node = document.createElement('div');
+      node.className = 'map-node' + ((playerLv < a.lv) ? ' locked' : '') + ((currentMap===idx) ? ' active' : '');
+      node.innerHTML = `<div style="font-weight:800">${a.name}</div><div class="small">Req LV ${a.lv}</div>`;
+      node.addEventListener('click', ()=>{
+        if(playerLv < a.lv){ log(`🚫 LV ${a.lv} 이상 필요`); return; }
+        currentMap = idx;
+        spawnMonster();
+        log(`📍 ${a.name} 지역으로 이동`);
+      });
+      mapGrid.appendChild(node);
+    });
+  }
 
-/* ===== 시작 ===== */
-load();
-updateUI();
-log("게임 초기화 완료");
+  function spawnMonster(){
+    const a = currentMap;
+    monsterMaxHp = 30 + a*40 + kills*2 + Math.floor(playerLv*2);
+    monsterHp = monsterMaxHp;
+    const name = monsters[a][Math.floor(Math.random()*monsters[a].length)];
+    monsterNameEl.textContent = name;
+    document.body.style.backgroundImage = `url(${areas[currentMap].bg})`;
+    if(name.includes('보스') && bossSound) bossSound.play().catch(()=>{});
+    updateUI();
+  }
 
-});
+  // ===== Combat =====
+  function attack(){
+    monsterHp -= atk;
+    if(hitSound) { hitSound.currentTime=0; hitSound.play().catch(()=>{}); }
+    if(monsterHp <= 0){
+      if(killSound) { killSound.currentTime=0; killSound.play().catch(()=>{}); }
+      kills++;
+      let drop = Math.random();
+      if(drop < 0.05){ coins += 100; log("🌈 무지개 골드 획득!!!"); }
+      else coins += Math.floor((10 + currentMap*6) * goldBonus);
+      const baseXp = 8 + currentMap*6;
+      const mult = xpBoost.active && Date.now() < xpBoost.endAt ? xpBoost.multiplier : 1;
+      exp += Math.floor(baseXp * (1 + upgradeLv*0.08 + goldBonus) * mult);
+      levelUp();
+      spawnMonster();
+    }
+    updateUI();
+  }
+
+  function spawnBoss(){
+    const boss = monsters[currentMap][monsters[currentMap].length-1] || '보스';
+    monsterNameEl.textContent = boss;
+    monsterMaxHp = Math.floor(monsterMaxHp * 2.5);
+    monsterHp = monsterMaxHp;
+    if(bossSound) bossSound.play().catch(()=>{});
+    log("👹 보스 소환!");
+    updateUI();
+  }
+
+  // ===== Level up =====
+  function levelUp(){
+    while(exp >= nextExp){
+      exp -= nextExp;
+      playerLv++;
+      atk++;
+      playerLvEl.textContent = playerLv;
+      if(levelSound) levelSound.currentTime=0, levelSound.play().catch(()=>{});
+      log(`🎉 레벨업! LV ${playerLv}`);
+      nextExp = Math.floor(nextExp * 1.3);
+    }
+    checkJob();
+  }
+
+  // ===== Upgrade =====
+  function upgrade(){
+    const cost = 20 + upgradeLv*6;
+    if(coins < cost){ log("💸 골드 부족!"); if(failSound) failSound.play().catch(()=>{}); return; }
+    coins -= cost;
+    const chance = upgradeLv >= 10 ? 95 : upgradeChance;
+    if(Math.random()*100 <= chance){
+      upgradeLv++;
+      atk += (upgradeLv>=10?2:1);
+      upgradeChance = Math.max(10, upgradeChance-2);
+      if(upgradeSound) upgradeSound.currentTime=0, upgradeSound.play().catch(()=>{});
+      log("✨ 강화 성공!");
+    } else {
+      if(failSound) failSound.currentTime=0, failSound.play().catch(()=>{});
+      log("💥 강화 실패…");
+    }
+    updateUI();
+  }
+
+  // ===== Job / check =====
+  function checkJob(){
+    if(playerLv>=20 && jobStage===0) jobBtn.style.display="inline-block";
+    else if(playerLv>=40 && jobStage===1) jobBtn.style.display="inline-block";
+    else if(playerLv>=60 && jobStage===2) jobBtn.style.display="inline-block";
+    else jobBtn.style.display="none";
+  }
+  function jobChange(){
+    if(jobStage===0 && playerLv>=20){ job="⚔ 우유참치"; atk+=5; jobStage=1; }
+    else if(jobStage===1 && playerLv>=40){ job="🔥 준브레드엉덩이"; atk+=10; goldBonus+=0.3; jobStage=2; }
+    else if(jobStage===2 && playerLv>=60){ job="🌌 유기사"; atk+=20; goldBonus+=0.7; jobStage=3; }
+    else { log("전직 조건 미충족"); return; }
+    log(`🌟 전직 완료! ${job}`);
+    if(upgradeSound) upgradeSound.currentTime=0, upgradeSound.play().catch(()=>{});
+    updateUI();
+  }
+
+  // ===== Auto hunt =====
+  function toggleAuto(){
+    autoHunt = !autoHunt;
+    if(autoHunt){
+      autoBtn.textContent = "🤖 자동사냥 ON";
+      if(autoInterval) clearInterval(autoInterval);
+      autoInterval = setInterval(()=>{ if(monsterHp>0) attack(); }, 220);
+      log("자동사냥 시작");
+    } else {
+      autoBtn.textContent = "🤖 자동사냥 OFF";
+      if(autoInterval) clearInterval(autoInterval);
+      autoInterval = null;
+      log("자동사냥 중지");
+    }
+  }
+
+  // ===== Skills =====
+  function useSkill(id){
+    const s = skillState[id];
+    const now = Date.now()/1000;
+    if(now - s.last < s.cd){ log(`${s.name}은(는) 아직 쿨타임입니다.`); return; }
+    if(mp < s.mp){ log("MP가 부족합니다."); return; }
+    mp -= s.mp;
+    s.last = now;
+
+    if(id===1){
+      const dmg = atk * 5;
+      monsterHp -= dmg;
+      log(`💥 ${s.name}! ${dmg} 대미지`);
+    } else if(id===2){
+      const dmg = atk * 3;
+      monsterHp -= dmg;
+      log(`🌀 ${s.name}! ${dmg} 대미지`);
+    }
+
+    if(hitSound) hitSound.currentTime=0, hitSound.play().catch(()=>{});
+    startCooldownUI(id);
+
+    if(monsterHp<=0){
+      if(killSound) killSound.currentTime=0, killSound.play().catch(()=>{});
+      kills++;
+      coins += Math.floor((10 + currentMap*6) * goldBonus);
+      exp += Math.floor((8 + currentMap*6) * (1 + upgradeLv*0.1 + goldBonus));
+      levelUp();
+      spawnMonster();
+    }
+    updateUI();
+  }
+
+  function startCooldownUI(id){
+    const cdElem = id===1 ? skill1Cd : skill2Cd;
+    const s = skillState[id];
+    cdElem.style.width = "100%";
+    let start = Date.now();
+    const tick = setInterval(()=>{
+      const elapsed = (Date.now() - start)/1000;
+      const perc = Math.max(0, (1 - elapsed/s.cd))*100;
+      cdElem.style.width = perc + "%";
+      if(elapsed >= s.cd) { clearInterval(tick); cdElem.style.width = "0%"; }
+    }, 100);
+  }
+
+  // ===== MP regen & xp booster check =====
+  setInterval(()=>{
+    if(mp < maxMp){ mp = Math.min(maxMp, mp + mpRegen); updateUI(); }
+    if(xpBoost.active && Date.now() >= xpBoost.endAt){ xpBoost.active=false; xpBoost.multiplier=1; log("XP 부스터 종료"); }
+  }, 1000);
+
+  // ===== Attendance =====
+  function checkAttendance(){
+    const today = new Date().toISOString().slice(0,10);
+    const last = localStorage.getItem('yugisa_attendance');
+    if(last !== today){
+      coins += 5000;
+      localStorage.setItem('yugisa_attendance', today);
+      attendanceMsg.textContent = "🎁 오늘 출석 보상 5000 지급!";
+      log("🎁 출석 보상 지급");
+      updateUI();
+    } else {
+      attendanceMsg.textContent = "✅ 오늘 이미 출석함";
+    }
+  }
+
+  // ===== Shop buy =====
+  function buyItem(id){
+    const it = shopItems.find(s=>s.id===id);
+    if(!it) return;
+    if(coins < it.price){ log("골드 부족"); if(failSound) failSound.play().catch(()=>{}); return; }
+    coins -= it.price;
+    it.onBuy();
+    if(upgradeSound) upgradeSound.currentTime=0, upgradeSound.play().catch(()=>{});
+    updateUI();
+  }
+
+  // ===== UI update =====
+  function updateUI(){
+    playerLvEl.textContent = playerLv;
+    atkEl.textContent = atk;
+    coinEl.textContent = coins;
+    upgradeLvEl.textContent = upgradeLv;
+    upgradeCostEl.textContent = 20 + upgradeLv*6;
+    expFill.style.width = Math.min(100, Math.floor((exp/nextExp)*100)) + '%';
+    monsterHpFill.style.width = Math.max(0, Math.floor((monsterHp/monsterMaxHp)*100)) + '%';
+    playerHpFill.style.width = '100%'; // placeholder: we don't track player HP loss here
+    playerMpFill.style.width = Math.min(100, Math.floor((mp/maxMp)*100)) + '%';
+    renderMap();
+    renderShop();
+    save(true); // autosave silently (no log spam)
+  }
+
+  // ===== Render shop =====
+  function renderShop(){
+    shopGrid.innerHTML = '';
+    shopItems.forEach(it=>{
+      const div = document.createElement('div');
+      div.className = 'shop-item';
+      div.innerHTML = `<div><strong>${it.label}</strong><div class="small">${it.desc}</div></div>
+                       <div style="text-align:right"><div class="small">${it.price}💰</div><button class="btn small">구매</button></div>`;
+      div.querySelector('button').addEventListener('click', ()=> buyItem(it.id));
+      shopGrid.appendChild(div);
+    });
+  }
+
+  // ===== Event bindings =====
+  document.getElementById('attackBtn').addEventListener('click', ()=> attack());
+  document.getElementById('spawnBtn').addEventListener('click', ()=> { spawnMonster(); log('스폰 리셋'); });
+  document.getElementById('bossBtn').addEventListener('click', ()=> spawnBoss());
+  document.getElementById('saveBtn').addEventListener('click', ()=> save(false)); // explicit save with log
+  document.getElementById('upgradeBtn').addEventListener('click', ()=> upgrade());
+  document.getElementById('autoBtn').addEventListener('click', ()=> toggleAuto());
+  document.getElementById('jobBtn').addEventListener('click', ()=> jobChange());
+  document.getElementById('checkBtn').addEventListener('click', ()=> checkAttendance());
+  document.getElementById('skill1').addEventListener('click', ()=> useSkill(1));
+  document.getElementById('skill2').addEventListener('click', ()=> useSkill(2));
+
+  // ===== Initial load + render =====
+  load();
+  renderShop();
+  renderMap();
+  spawnMonster();
+  updateUI();
+  log("게임 초기화 완료 — 클릭으로 사운드 활성화 후 플레이하세요.");
+
+  // ===== Debug help in console =====
+  window._Y = {
+    state: ()=> ({coins,atk,playerLv,exp,nextExp,upgradeLv,currentMap,monsterHp,monsterMaxHp,mp}),
+    spawnMonster, attack, toggleAuto, upgrade, useSkill, save
+  };
+
+}); // DOMContentLoaded end
 </script>
 </body>
 </html>
+```0
