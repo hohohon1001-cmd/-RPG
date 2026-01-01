@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     {name:"🏜 식탁", lv:30, bg:"https://images.unsplash.com/photo-1504674900247-0877df9cc836"},
     {name:"🌋 팀 나빠", lv:40, bg:"https://images.unsplash.com/photo-1500530855697-b586d89ba3ee"},
     {name:"🌌 유기사 디스코드", lv:50, bg:"https://images.unsplash.com/photo-1518770660439-4636190af475"},
-    {name:"🎮 로블 애니(유기사)", lv:60, bg:"https://images.unsplash.com/photo-1519681393784-d120267933ba"}
+    {name:"🎮 미1친놈 게임즈", lv:60, bg:"https://images.unsplash.com/photo-1519681393784-d120267933ba"}
   ];
 
   const monsters = [
@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     ["옷에 떨어진 밥풀","후식으론 준브레드 엉덩이"],
     ["짭 유기사","멜님으로 위장한 준브레드"],
     ["자칼님","흑화한 멜님","보스: 유기사ok"],
-    ["유기사","베이컨","보스: 베이컨 엄마"]
+    ["미1친 개발자","야근하는 기획자","보스: 미1친놈 대표"]
   ];
 
   // ===== Shop items =====
@@ -241,69 +241,51 @@ document.addEventListener('DOMContentLoaded', ()=>{
     logEl.prepend(d);
   }
 
-  function save(silent = false){
-  try{
-    const data = {
-      coins,
-      atk,
-      playerLv,
-      exp,
-      nextExp,
-      upgradeLv,
-      upgradeChance,
-      job,
-      jobStage,
-      goldBonus,
-      kills,
-      mp,
-      maxMp,
-      skillState,
-      currentMap
-    };
-
-function save(){
-  try{
-    const data = {
-      coins,
-      atk,
-      playerLv,
-      exp,
-      nextExp,
-      upgradeLv,
-      upgradeChance,
-      job,
-      jobStage,
-      goldBonus,
-      kills,
-      mp,
-      maxMp,
-      skillState,
-      currentMap
-    };
-
-    localStorage.setItem("yugisa_save_v3", JSON.stringify(data));
-    localStorage.setItem("yugisa_save_time", Date.now());
-
-    // ❌ 로그 출력 없음 (완전히 조용)
-  }catch(e){
-    console.error("Save error:", e);
+  // ===== Save/Load =====
+  function save(){
+    try{
+      const data = {
+        coins, atk, playerLv, exp, nextExp, upgradeLv, upgradeChance,
+        job, jobStage, goldBonus, kills, mp, maxMp, skillState, currentMap
+      };
+      localStorage.setItem('yugisa_save_v3', JSON.stringify(data));
+      localStorage.setItem('yugisa_save_time', String(Date.now()));
+      timeBadge.textContent = "저장됨";
+      log("💾 저장 완료");
+    }catch(e){
+      console.error(e);
+      log("⚠ 저장 실패");
+    }
   }
-}
 
-function save(){
-  try{
-    const data = {
-      coins, atk, playerLv, exp, nextExp, upgradeLv, upgradeChance,
-      job, jobStage, goldBonus, kills, mp, maxMp, skillState, currentMap
-    };
-    localStorage.setItem('yugisa_save_v3', JSON.stringify(data));
-    localStorage.setItem('yugisa_save_time', String(Date.now()));
-    timeBadge.textContent = "저장됨";
-    // ✅ 로그 출력 완전 제거
-  }catch(e){
-    console.error(e);
+  function load(){
+    try{
+      const raw = localStorage.getItem('yugisa_save_v3');
+      if(!raw) return;
+      const s = JSON.parse(raw);
+      coins = Number(s.coins)||coins;
+      atk = Number(s.atk)||atk;
+      playerLv = Number(s.playerLv)||playerLv;
+      exp = Number(s.exp)||exp;
+      nextExp = Number(s.nextExp)||nextExp;
+      upgradeLv = Number(s.upgradeLv)||upgradeLv;
+      upgradeChance = Number(s.upgradeChance)||upgradeChance;
+      job = s.job||job;
+      jobStage = Number(s.jobStage)||jobStage;
+      goldBonus = Number(s.goldBonus)||goldBonus;
+      kills = Number(s.kills)||kills;
+      mp = Number(s.mp)||mp;
+      maxMp = Number(s.maxMp)||maxMp;
+      if(s.skillState) {
+        Object.keys(s.skillState).forEach(k=> skillState[k] = s.skillState[k]);
+      }
+      currentMap = Number(s.currentMap)||currentMap;
+      log("💽 저장 데이터 불러옴");
+    }catch(e){
+      console.warn("로드 실패", e);
+      log("⚠ 로드 실패");
+    }
   }
-}
 
   // ===== Map render & spawn =====
   function renderMap(){
@@ -485,9 +467,9 @@ function save(){
     const today = new Date().toISOString().slice(0,10);
     const last = localStorage.getItem('yugisa_attendance');
     if(last !== today){
-      coins += 5000;
+      coins += 50;
       localStorage.setItem('yugisa_attendance', today);
-      attendanceMsg.textContent = "🎁 오늘 출석 보상 5000 지급!";
+      attendanceMsg.textContent = "🎁 오늘 출석 보상 50 지급!";
       log("🎁 출석 보상 지급");
       updateUI();
     } else {
