@@ -261,26 +261,34 @@ document.addEventListener('DOMContentLoaded', ()=>{
       currentMap
     };
 
+function save(){
+  try{
+    const data = {
+      coins,
+      atk,
+      playerLv,
+      exp,
+      nextExp,
+      upgradeLv,
+      upgradeChance,
+      job,
+      jobStage,
+      goldBonus,
+      kills,
+      mp,
+      maxMp,
+      skillState,
+      currentMap
+    };
+
     localStorage.setItem("yugisa_save_v3", JSON.stringify(data));
     localStorage.setItem("yugisa_save_time", Date.now());
 
-    // 우측 작은 상태 표시 (자동 저장용)
-    if(typeof timeBadge !== "undefined"){
-      timeBadge.textContent = "💾 자동 저장됨";
-    }
-
-    // 수동 저장일 때만 로그 출력
-    if(!silent){
-      log("💾 저장 완료!");
-    }
-
+    // ❌ 로그 출력 없음 (완전히 조용)
   }catch(e){
     console.error("Save error:", e);
-    if(!silent){
-      log("⚠ 저장 실패");
-    }
   }
-  }
+}
 
   function load(){
     try{
